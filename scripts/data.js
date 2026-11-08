@@ -13,6 +13,7 @@ const LINKS_FILE = 'team-links.json';
 const SEASONS_DIR = 'seasons';
 const isYouTube = (url) => /^https:\/\/(www\.|m\.)?(youtube\.com|youtu\.be)\//i.test(String(url || ''));
 const isInstagram = (url) => /^https:\/\/(www\.)?instagram\.com\/[A-Za-z0-9_.]+\/?$/i.test(String(url || ''));
+const LINK_VALIDATORS = { youtube: isYouTube, instagram: isInstagram };
 
 const SHEETS = {
   schedule: 'Full Season Schedule & Standing',
@@ -275,7 +276,12 @@ function parseWorkbook(file) {
       const team = r[header.indexOf('Team')];
       for (const [kind, column] of [['youtube', 'YouTube'], ['instagram', 'Instagram']]) {
         const i = header.indexOf(column);
-        if (team && i >= 0 && r[i]) sheetLinks.push({ team, kind, url: r[i], source: linkSheetName });
+        if (!team || i < 0 || !r[i]) continue;
+        // Validate here, not only when building pages: these links also go into
+        // the public season archive, so anything else (e.g. a spreadsheet URL
+        // typed into the wrong column) must never be kept.
+        if (LINK_VALIDATORS[kind](r[i])) sheetLinks.push({ team, kind, url: r[i], source: linkSheetName });
+        else warn(`Ignoring ${column} link for ${team} from ${linkSheetName}: not a valid ${column} URL`);
       }
     }
   }

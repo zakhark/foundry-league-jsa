@@ -277,6 +277,21 @@ const SCHEDULE_COLS = [
 ];
 
 // ---------- static assets ----------
+// The output folder is emptied before every build, so refuse anything that
+// could hold source files: the project folder itself, a folder containing it,
+// or a source folder (seasons/, src/, scripts/, ...) or anything inside one.
+(function checkOutDir() {
+  const root = path.resolve('.');
+  const out = path.resolve(OUT);
+  const inside = (child, parent) => child === parent || child.startsWith(parent + path.sep);
+  const protectedDirs = ['seasons', 'src', 'scripts', 'data', 'docker', '.github', '.git', 'node_modules'].map((d) => path.join(root, d));
+  const bad = inside(root, out) || protectedDirs.some((d) => inside(out, d));
+  const looksLikeOtherFiles = fs.existsSync(out) && fs.readdirSync(out).length && !fs.existsSync(path.join(out, 'index.html'));
+  if (bad || looksLikeOtherFiles) {
+    console.error(`Refusing to build into "${OUT}": it would delete source files. Use a separate folder, e.g. --out dist-archive.`);
+    process.exit(1);
+  }
+})();
 fs.rmSync(OUT, { recursive: true, force: true });
 fs.mkdirSync(OUT, { recursive: true });
 for (const f of ['style.css', 'app.js', 'logo.png']) fs.copyFileSync(path.join('src', f), path.join(OUT, f));
