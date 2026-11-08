@@ -77,6 +77,9 @@ const gameLink = (g, r, text) => `<a href="${r}games/${g.num}.html">${text}</a>`
 const YT_ICON = '<svg class="yt-icon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="#ff0000" d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.8z"/><path fill="#fff" d="M9.6 15.6 15.8 12 9.6 8.4z"/></svg>';
 const IG_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><defs><linearGradient id="ig" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#feda75"/><stop offset=".35" stop-color="#fa7e1e"/><stop offset=".6" stop-color="#d62976"/><stop offset="1" stop-color="#4f5bd5"/></linearGradient></defs><rect x="2" y="2" width="20" height="20" rx="6" fill="url(#ig)"/><circle cx="12" cy="12" r="4.3" fill="none" stroke="#fff" stroke-width="2"/><circle cx="17.3" cy="6.7" r="1.3" fill="#fff"/></svg>';
 // YouTube / Instagram buttons for a team page header.
+// Icons for links to the rink's game center (clipboard) and scoresheets (document).
+const GC_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M9 10h6M9 14h6M9 18h4"/></svg>';
+const SHEET_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>';
 function teamSocial(t) {
   const links = [];
   if (t.links.youtube) links.push(`<a class="yt" href="${esc(t.links.youtube)}" target="_blank" rel="noopener">${YT_ICON}YouTube</a>`);
@@ -84,6 +87,7 @@ function teamSocial(t) {
     const handle = t.links.instagram.replace(/\/+$/, '').split('/').pop();
     links.push(`<a class="yt ig" href="${esc(t.links.instagram)}" target="_blank" rel="noopener">${IG_ICON}@${esc(handle)}</a>`);
   }
+  if (t.gameCenter) links.push(`<a class="yt gc" href="${esc(t.gameCenter)}" target="_blank" rel="noopener">${GC_ICON}Rink team page</a>`);
   return links.length ? `<div class="social">${links.join('')}</div>` : '';
 }
 // Play icon next to a result, linking to the game's (first) video.
@@ -379,7 +383,7 @@ for (const g of D.games) {
 </div>
 <p class="center-text muted">${dateLabel(g)} · ${esc(g.time)} · ${place(g)} · Week ${g.week ?? '–'}${g.playoff ? ' · Playoffs' : ''}</p>
 ${g.comment ? `<p class="note">${esc(g.comment)}</p>` : ''}
-${g.videos.length ? `<div class="videos">${g.videos.map((v) => `<a class="yt" href="${esc(v.url)}" target="_blank" rel="noopener" title="${esc(v.title)}">${YT_ICON}Watch${v.team ? ` · ${esc(v.team)} video` : ''}</a>`).join('')}</div>` : ''}`;
+${g.videos.length || g.gameCenter ? `<div class="videos">${g.videos.map((v) => `<a class="yt" href="${esc(v.url)}" target="_blank" rel="noopener" title="${esc(v.title)}">${YT_ICON}Watch${v.team ? ` · ${esc(v.team)} video` : ''}</a>`).join('')}${g.gameCenter ? `<a class="yt gc" href="${esc(g.gameCenter.url)}" target="_blank" rel="noopener" title="This game on the rink's TimeToScore game center">${GC_ICON}Rink game center</a>${g.played ? `<a class="yt gc" href="${esc(g.gameCenter.scoresheet)}" target="_blank" rel="noopener" title="Official scoresheet (PDF) from the rink">${SHEET_ICON}Official scoresheet</a>` : ''}` : ''}</div>` : ''}`;
 
   if (g.played) {
     const periodTable = table(

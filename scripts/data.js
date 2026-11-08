@@ -10,6 +10,7 @@ const config = require('./config');
 
 const LINKS_FILE = 'team-links.json';
 const VIDEOS_FILE = 'game-videos.json';
+const GAME_CENTER_FILE = 'game-center.json';
 const isYouTube = (url) => /^https:\/\/(www\.|m\.)?(youtube\.com|youtu\.be)\//i.test(String(url || ''));
 const isInstagram = (url) => /^https:\/\/(www\.)?instagram\.com\/[A-Za-z0-9_.]+\/?$/i.test(String(url || ''));
 
@@ -320,7 +321,30 @@ function load(file) {
     }
   }
 
-  return build({ season, roster, games, scheduleNotes, events, subs, scheduleUpdates, teamLinks });
+  // ---------- Rink game center links (optional; see scripts/game-center.js) ----------
+  const gameCenterTeams = new Map();
+  const gcRaw = fs.existsSync(GAME_CENTER_FILE) ? JSON.parse(fs.readFileSync(GAME_CENTER_FILE, 'utf8')) : null;
+  // Game numbers restart every season, so only use links made for this season.
+  if (gcRaw && String(gcRaw.ourSeason) !== String(season)) {
+    warn(`${GAME_CENTER_FILE} is for season ${gcRaw.ourSeason}, not ${season}; rink links are left out. Run: npm run game-center -- --new-season "<rink schedule URL>"`);
+  }
+  if (gcRaw && String(gcRaw.ourSeason) === String(season)) {
+    const gc = gcRaw;
+    const q = `league=${gc.league}&season=${gc.season}`;
+    for (const [num, id] of Object.entries(gc.games || {})) {
+      const g = gameByNum.get(Number(num));
+      if (!g) { warn(`${GAME_CENTER_FILE}: no game #${num}`); continue; }
+      g.gameCenter = {
+        url: `${gc.site}/game-center-widget/?game=${id}&${q}`,
+        scoresheet: `https://stats.blackbear.timetoscore.com/generate-scorecard.php?game_id=${id}`,
+      };
+    }
+    for (const [name, id] of Object.entries(gc.teams || {})) {
+      gameCenterTeams.set(canonTeam(name), `${gc.site}/team-page/?team=${id}&${q}`);
+    }
+  }
+
+  return build({ season, roster, games, scheduleNotes, events, subs, scheduleUpdates, teamLinks, gameCenterTeams });
 }
 
 // ---------- Derived stats ----------
@@ -338,6 +362,7 @@ function build(d) {
         h2h: new Map(),
         roster: [], goalies: [],
         links: d.teamLinks.get(name) || {},
+        gameCenter: d.gameCenterTeams.get(name) || '',
       });
     }
     return teams.get(name);

@@ -217,3 +217,5 @@ h2.split a { font-weight: 500; }
 .vc-links a { display: inline-flex; align-items: center; gap: 5px; }
 .vc-links svg { width: 16px; height: 16px; }
 .social + .toolbar { margin-top: 16px; }
+.yt.gc { color: var(--accent); }
+.yt.gc:hover { border-color: var(--accent); }
