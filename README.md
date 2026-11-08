@@ -1,0 +1,74 @@
+# Hockey league website
+
+A static website generated from the league Google Sheet. It has standings, a filterable schedule, box scores for every game, team pages, player pages, goalie stats, the sub list and game videos.
+
+The spreadsheet stays the single source of truth. Keep entering scores and stats there as you do now, and the site rebuilds from it.
+
+## How it works
+
+1. `npm run fetch` downloads the sheet as `data/sheet.xlsx`. The sheet must be shared as **Anyone with the link can view**.
+2. `npm run build` reads the raw tabs, calculates the standings and stats, and writes plain HTML to `dist/`.
+
+The build only reads these tabs:
+
+| Tab | Used for |
+| --- | --- |
+| Full Season Schedule & Standing (columns A–AA) | Games, scores, OT/SO, starting goalies |
+| Player Stats (Source Data) | Goals, shootout goals and penalties per game |
+| S## Rosters (e.g. `S15 Rosters`) | Rosters, numbers, positions, captains |
+| Sub List | Sub appearances |
+| Schedule Updates | The "schedule changes" section |
+| Team Links (optional) | Team YouTube and Instagram links |
+
+No other tab is ever read, including Probation List, Notes and Season Comments, so none of their content can end up on the site.
+
+Standings and stats are calculated from the raw data. The formatted summary tabs are not copied. The totals match the sheet's own standings, including the rule that the shootout-winning goal doesn't count toward GF/GA or shutouts.
+
+At the end of each build, a short list of **data notes** is printed. It flags things worth fixing in the sheet, such as a player in the stats who isn't on a roster, or a score that doesn't match the goals entered.
+
+## The spreadsheet ID is a secret
+
+The sheet's ID (the long part of its URL) is **not** in the code. Anyone who has it can open every tab of the sheet, including hidden ones, so it's kept out of this public repository and out of build logs. Provide it as `SHEET_ID`:
+
+- **Locally / Docker:** copy `.env.example` to `.env` and fill it in. `.env` is ignored by git and Docker.
+- **GitHub Actions:** add it as a repository secret:
+  ```sh
+  gh secret set SHEET_ID -R <owner>/<repo>
+  ```
+- **Cloudflare Pages / Netlify:** add a `SHEET_ID` environment variable in the project settings.
+
+## Run it locally
+
+```sh
+npm install
+cp .env.example .env   # then put the sheet ID in .env
+npm run all            # fetch + build
+npm run serve          # http://localhost:8080
+```
+
+## Run it in a container
+
+```sh
+cp .env.example .env           # then put the sheet ID in .env
+docker compose up -d --build   # http://localhost:8080
+```
+
+The `builder` container re-downloads the sheet and rebuilds every 15 minutes (`REFRESH_SECONDS`), and `nginx` serves the result.
+
+## Free hosting on GitHub Pages (recommended)
+
+1. Push this folder to a GitHub repository (the `main` branch).
+2. Add the `SHEET_ID` repository secret (see above).
+3. In the repo, go to **Settings → Pages → Source** and pick **GitHub Actions**.
+4. The workflow in `.github/workflows/deploy.yml` builds and publishes the site on every push and on game nights and the day after: 9, 10 and 11 PM on Fri/Sun/Mon, then 2 AM, 10 AM, 2 PM, 4 PM, 6 PM and 8 PM the next day (Eastern Standard Time; one hour later during daylight saving). It also runs when you click **Actions → Build and deploy → Run workflow** after entering scores.
+
+Other free static hosts work the same way: Cloudflare Pages and Netlify both use build command `npm run all` and output directory `dist`, plus the `SHEET_ID` environment variable.
+
+## Customising
+
+- League name, points per win/OTL, etc.: `scripts/config.js`. The league name can also be set with the `LEAGUE_NAME` environment variable.
+- Look and feel: `src/style.css`. Team colours are picked from words in team names (`COLOR_WORDS` in `scripts/build.js`).
+- Team YouTube and Instagram links: fill in `team-links.json`, or add a **Team Links** tab to the spreadsheet with columns `Team`, `YouTube` and `Instagram` (the tab overrides the file). Buttons for them appear on that team's page. Only `https://youtube.com/...`, `https://youtu.be/...` and `https://instagram.com/<handle>` links are accepted.
+- Team logos: put an image named after the team in `src/logos/`, e.g. `reapers.jpg` or `kraken-cold-ones.png` (PNG, JPG, WebP or SVG; square works best). Use the team's page name from its URL: `teams/kraken-cold-ones.html` → `kraken-cold-ones`. The logo appears on the team page, on the Teams list and next to the team name across the site. Teams without a logo show their initials in the team colour.
+- Game videos: `npm run videos` scans the channels in `team-links.json` and saves matches to `game-videos.json`. It matches videos by the date and opponent in the title, e.g. "Reapers vs Whalers October 19 2026". The scheduled GitHub build and the container run this automatically. Entries you add or fix by hand in `game-videos.json` are kept. Each game with a video gets a "Watch" button on its game page and a ▶ icon in the schedules.
+- New season: rename the roster tab to `S16 Rosters` and the site picks it up automatically.

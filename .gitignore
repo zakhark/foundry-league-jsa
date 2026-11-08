@@ -1,0 +1,28 @@
+# Dependencies and build output
+node_modules/
+dist/
+
+# Downloaded spreadsheet: it contains every tab, including private ones
+data/*.xlsx
+data/*.csv
+
+# Local secrets and settings
+.env
+.env.*
+!.env.example
+
+# Claude Code: project notes and local settings stay on this machine
+CLAUDE.md
+CLAUDE.local.md
+.claude/
+
+# Logs
+npm-debug.log*
+*.log
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
