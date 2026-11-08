@@ -1,0 +1,51 @@
+{
+  "_comment": "Team links. Use the exact team name; leave a field blank if the team has none. A 'Team Links' tab in the spreadsheet (columns: Team, YouTube, Instagram) overrides this file.",
+  "Sk8 Balls": {
+    "youtube": "https://www.youtube.com/@Sk8ballsHockey-yn9nf",
+    "instagram": ""
+  },
+  "Clockwork Orange": {
+    "youtube": "https://www.youtube.com/@ClockworkOrangeHockeyClub",
+    "instagram": "https://www.instagram.com/clockworkorangehockeyclub/"
+  },
+  "Mid Ice Crisis": {
+    "youtube": "",
+    "instagram": "https://www.instagram.com/mid_ice_crisis_/"
+  },
+  "UnDucks": {
+    "youtube": "",
+    "instagram": "https://www.instagram.com/the.unducks.hc/"
+  },
+  "Green Goombas": {
+    "youtube": "",
+    "instagram": "https://www.instagram.com/greengoombashc/"
+  },
+  "Yellow Jackets": {
+    "youtube": "",
+    "instagram": ""
+  },
+  "Reapers": {
+    "youtube": "https://www.youtube.com/@NewJerseyReapersHC",
+    "instagram": "https://www.instagram.com/reapershc/"
+  },
+  "Kraken Cold Ones": {
+    "youtube": "",
+    "instagram": "https://www.instagram.com/krakencoldones_hockey/"
+  },
+  "Black Squadron": {
+    "youtube": "",
+    "instagram": "https://www.instagram.com/blacksquadronhc/"
+  },
+  "Flamingos": {
+    "youtube": "",
+    "instagram": "https://www.instagram.com/flamingosihc/"
+  },
+  "Whalers": {
+    "youtube": "",
+    "instagram": "https://www.instagram.com/graywhalershc/"
+  },
+  "Kodiaks": {
+    "youtube": "",
+    "instagram": ""
+  }
+}
