@@ -1,16 +1,29 @@
 // Builds the static website from data/sheet.xlsx into dist/.
+//   node scripts/build.js                       # current season, from the workbook
+//   node scripts/build.js --archive 15 --out x  # a frozen season, from seasons/15/archive.json
 const fs = require('fs');
 const path = require('path');
 const config = require('./config');
-const { load, slugify } = require('./data');
+const { load, loadArchive, archiveFile, slugify } = require('./data');
 
-if (!fs.existsSync(config.dataFile)) {
-  console.error(`${config.dataFile} not found. Run "npm run fetch" first.`);
-  process.exit(1);
+const argv = process.argv.slice(2);
+const opt = (name) => { const i = argv.indexOf(name); return i >= 0 ? argv[i + 1] : undefined; };
+const archiveSeason = opt('--archive');
+let D;
+if (archiveSeason) {
+  if (!fs.existsSync(archiveFile(archiveSeason))) {
+    console.error(`${archiveFile(archiveSeason)} not found. Freeze the season first: npm run freeze-season`);
+    process.exit(1);
+  }
+  D = loadArchive(archiveSeason);
+} else {
+  if (!fs.existsSync(config.dataFile)) {
+    console.error(`${config.dataFile} not found. Run "npm run fetch" first.`);
+    process.exit(1);
+  }
+  D = load(config.dataFile);
 }
-
-const D = load(config.dataFile);
-const OUT = config.outDir;
+const OUT = opt('--out') || config.outDir;
 const LEAGUE = config.leagueName;
 const SEASON = `Season ${D.season}`;
 const builtAt = new Date();
@@ -264,6 +277,21 @@ const SCHEDULE_COLS = [
 ];
 
 // ---------- static assets ----------
+// The output folder is emptied before every build, so refuse anything that
+// could hold source files: the project folder itself, a folder containing it,
+// or a source folder (seasons/, src/, scripts/, ...) or anything inside one.
+(function checkOutDir() {
+  const root = path.resolve('.');
+  const out = path.resolve(OUT);
+  const inside = (child, parent) => child === parent || child.startsWith(parent + path.sep);
+  const protectedDirs = ['seasons', 'src', 'scripts', 'data', 'docker', '.github', '.git', 'node_modules'].map((d) => path.join(root, d));
+  const bad = inside(root, out) || protectedDirs.some((d) => inside(out, d));
+  const looksLikeOtherFiles = fs.existsSync(out) && fs.readdirSync(out).length && !fs.existsSync(path.join(out, 'index.html'));
+  if (bad || looksLikeOtherFiles) {
+    console.error(`Refusing to build into "${OUT}": it would delete source files. Use a separate folder, e.g. --out dist-archive.`);
+    process.exit(1);
+  }
+})();
 fs.rmSync(OUT, { recursive: true, force: true });
 fs.mkdirSync(OUT, { recursive: true });
 for (const f of ['style.css', 'app.js', 'logo.png']) fs.copyFileSync(path.join('src', f), path.join(OUT, f));

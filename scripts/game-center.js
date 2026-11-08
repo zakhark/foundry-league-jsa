@@ -17,7 +17,7 @@
 // The rink's schedule page is built in the browser by a script, so it has to be
 // rendered first. The schedule is set for the season, so run this once per
 // season (or when the rink adds games). The results are saved in
-// game-center.json; the site build only reads that file and never contacts the
+// seasons/<season>/game-center.json; the site build only reads that file and never contacts the
 // rink's site.
 //
 // Games are matched by date and the two teams. Rink game IDs that are already
@@ -26,9 +26,8 @@ const fs = require('fs');
 const path = require('path');
 const { execFileSync } = require('child_process');
 const config = require('./config');
-const { load } = require('./data');
+const { load, seasonDir } = require('./data');
 
-const FILE = 'game-center.json';
 const MONTHS = { Jan: 1, Feb: 2, Mar: 3, Apr: 4, May: 5, Jun: 6, Jul: 7, Aug: 8, Sep: 9, Oct: 10, Nov: 11, Dec: 12 };
 
 function findBrowser() {
@@ -94,6 +93,8 @@ const norm = (s) => s.toLowerCase().replace(/\(.*?\)/g, '').replace(/[^a-z0-9]/g
 
 function main() {
   const D = load(config.dataFile);
+  const FILE = path.join(seasonDir(D.season), 'game-center.json');
+  fs.mkdirSync(path.dirname(FILE), { recursive: true });
   let args = process.argv.slice(2);
   let saved = fs.existsSync(FILE) ? JSON.parse(fs.readFileSync(FILE, 'utf8')) : null;
 
