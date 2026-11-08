@@ -1,5 +1,5 @@
 // Finds game videos on the team YouTube channels listed in team-links.json and
-// records them in game-videos.json, matched to games by date and opponent.
+// records them in seasons/<season>/game-videos.json, matched to games by date and opponent.
 //
 //   npm run videos
 //
@@ -12,9 +12,9 @@
 // time, so if this stops finding videos, add links to game-videos.json manually.
 const fs = require('fs');
 const config = require('./config');
-const { load } = require('./data');
+const path = require('path');
+const { load, seasonDir } = require('./data');
 
-const VIDEOS_FILE = 'game-videos.json';
 const MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
 
 const ymd = (y, m, d) => {
@@ -83,6 +83,9 @@ async function channelVideos(url) {
 
 async function main() {
   const D = load(config.dataFile);
+  // Game numbers restart every season, so videos are stored per season.
+  const VIDEOS_FILE = path.join(seasonDir(D.season), 'game-videos.json');
+  fs.mkdirSync(path.dirname(VIDEOS_FILE), { recursive: true });
   const saved = fs.existsSync(VIDEOS_FILE) ? JSON.parse(fs.readFileSync(VIDEOS_FILE, 'utf8')) : {};
   const result = { _comment: saved._comment || 'Game videos by game number. Each entry: { "team": <whose channel>, "url": <video link>, "title": <video title> }. Edit freely; "npm run videos" only adds new matches.' };
   for (const [k, v] of Object.entries(saved)) if (!k.startsWith('_')) result[k] = v;

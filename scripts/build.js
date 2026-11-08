@@ -1,16 +1,29 @@
 // Builds the static website from data/sheet.xlsx into dist/.
+//   node scripts/build.js                       # current season, from the workbook
+//   node scripts/build.js --archive 15 --out x  # a frozen season, from seasons/15/archive.json
 const fs = require('fs');
 const path = require('path');
 const config = require('./config');
-const { load, slugify } = require('./data');
+const { load, loadArchive, archiveFile, slugify } = require('./data');
 
-if (!fs.existsSync(config.dataFile)) {
-  console.error(`${config.dataFile} not found. Run "npm run fetch" first.`);
-  process.exit(1);
+const argv = process.argv.slice(2);
+const opt = (name) => { const i = argv.indexOf(name); return i >= 0 ? argv[i + 1] : undefined; };
+const archiveSeason = opt('--archive');
+let D;
+if (archiveSeason) {
+  if (!fs.existsSync(archiveFile(archiveSeason))) {
+    console.error(`${archiveFile(archiveSeason)} not found. Freeze the season first: npm run freeze-season`);
+    process.exit(1);
+  }
+  D = loadArchive(archiveSeason);
+} else {
+  if (!fs.existsSync(config.dataFile)) {
+    console.error(`${config.dataFile} not found. Run "npm run fetch" first.`);
+    process.exit(1);
+  }
+  D = load(config.dataFile);
 }
-
-const D = load(config.dataFile);
-const OUT = config.outDir;
+const OUT = opt('--out') || config.outDir;
 const LEAGUE = config.leagueName;
 const SEASON = `Season ${D.season}`;
 const builtAt = new Date();

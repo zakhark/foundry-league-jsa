@@ -5,12 +5,12 @@
 // Other tabs (e.g. internal notes or disciplinary lists) are never read, so
 // they can never end up on the website.
 const fs = require('fs');
+const path = require('path');
 const XLSX = require('xlsx');
 const config = require('./config');
 
 const LINKS_FILE = 'team-links.json';
-const VIDEOS_FILE = 'game-videos.json';
-const GAME_CENTER_FILE = 'game-center.json';
+const SEASONS_DIR = 'seasons';
 const isYouTube = (url) => /^https:\/\/(www\.|m\.)?(youtube\.com|youtu\.be)\//i.test(String(url || ''));
 const isInstagram = (url) => /^https:\/\/(www\.)?instagram\.com\/[A-Za-z0-9_.]+\/?$/i.test(String(url || ''));
 
@@ -79,7 +79,7 @@ function slugify(s) {
   );
 }
 
-function load(file) {
+function parseWorkbook(file) {
   const wb = XLSX.readFile(file, { cellStyles: false });
 
   // ---------- Team name canonicalisation ----------
@@ -265,6 +265,41 @@ function load(file) {
     });
   }
 
+  // ---------- Team Links tab (optional) ----------
+  const sheetLinks = [];
+  const linkSheetName = wb.SheetNames.find((n) => SHEETS.links.test(n));
+  if (linkSheetName) {
+    const L = fromHeader(rowsOf(wb.Sheets[linkSheetName]), 'Team', linkSheetName);
+    const header = L[0];
+    for (const r of L.slice(1)) {
+      const team = r[header.indexOf('Team')];
+      for (const [kind, column] of [['youtube', 'YouTube'], ['instagram', 'Instagram']]) {
+        const i = header.indexOf(column);
+        if (team && i >= 0 && r[i]) sheetLinks.push({ team, kind, url: r[i], source: linkSheetName });
+      }
+    }
+  }
+
+  return { season: String(season), roster, games, scheduleNotes, events, subs, scheduleUpdates, sheetLinks };
+}
+
+// Where a season's own files live: game videos, rink game center links and,
+// once the season is over, its frozen archive.
+const seasonDir = (season) => path.join(SEASONS_DIR, String(season));
+
+// Attaches team links, game videos and rink links to parsed season data, then
+// calculates everything. Works the same for a live workbook and an archive.
+function assemble(raw) {
+  const { season, roster, games, scheduleNotes, events, subs, scheduleUpdates } = raw;
+  const gameByNum = new Map(games.map((g) => [g.num, g]));
+  const teamNames = new Map();
+  for (const n of [...roster.map((r) => r.team), ...games.flatMap((g) => [g.home, g.away])]) {
+    if (n && !teamNames.has(n.toLowerCase())) teamNames.set(n.toLowerCase(), n);
+  }
+  const canonTeam = (name) => (name ? teamNames.get(name.toLowerCase()) || name : '');
+  const VIDEOS_FILE = path.join(seasonDir(season), 'game-videos.json');
+  const GAME_CENTER_FILE = path.join(seasonDir(season), 'game-center.json');
+
   // ---------- Team links (optional) ----------
   // From "team-links.json" and/or an optional "Team Links" tab. The tab wins.
   const teamLinks = new Map();
@@ -290,18 +325,7 @@ function load(file) {
       for (const kind of Object.keys(LINK_KINDS)) addLink(name, kind, v[kind], LINKS_FILE);
     }
   }
-  const linkSheetName = wb.SheetNames.find((n) => SHEETS.links.test(n));
-  if (linkSheetName) {
-    const L = fromHeader(rowsOf(wb.Sheets[linkSheetName]), 'Team', linkSheetName);
-    const header = L[0];
-    for (const r of L.slice(1)) {
-      const team = r[header.indexOf('Team')];
-      for (const [kind, k] of Object.entries(LINK_KINDS)) {
-        const i = header.indexOf(k.column);
-        if (i >= 0) addLink(team, kind, r[i], linkSheetName);
-      }
-    }
-  }
+  for (const l of raw.sheetLinks || []) addLink(l.team, l.kind, l.url, l.source);
   for (const name of teamLinks.keys()) {
     if (!roster.some((r) => r.team === name)) warn(`Team links given for "${name}", which is not a current team`);
   }
@@ -345,6 +369,32 @@ function load(file) {
   }
 
   return build({ season, roster, games, scheduleNotes, events, subs, scheduleUpdates, teamLinks, gameCenterTeams });
+}
+
+// Live season: read the workbook.
+function load(file) {
+  return assemble(parseWorkbook(file));
+}
+
+// ---------- Season archives ----------
+// When a season is over, "npm run freeze-season" saves its parsed data to
+// seasons/<n>/archive.json. That's only what the site shows anyway (schedule,
+// scores, goals and penalties, rosters, subs); the raw workbook with its
+// private tabs is never saved. Archived seasons then build without the sheet.
+const archiveFile = (season) => path.join(seasonDir(season), 'archive.json');
+
+function freeze(file) {
+  const raw = parseWorkbook(file);
+  const out = archiveFile(raw.season);
+  fs.mkdirSync(path.dirname(out), { recursive: true });
+  fs.writeFileSync(out, `${JSON.stringify({ _comment: `Frozen copy of season ${raw.season}, made by "npm run freeze-season".`, frozenAt: new Date().toISOString(), ...raw }, null, 1)}\n`);
+  return { season: raw.season, file: out, games: raw.games.length, events: raw.events.length };
+}
+
+function loadArchive(season) {
+  const raw = JSON.parse(fs.readFileSync(archiveFile(season), 'utf8'));
+  for (const g of [...raw.games, ...raw.scheduleNotes]) g.date = g.date ? new Date(g.date) : null;
+  return assemble(raw);
 }
 
 // ---------- Derived stats ----------
@@ -516,4 +566,4 @@ function build(d) {
   };
 }
 
-module.exports = { load, slugify };
+module.exports = { load, loadArchive, freeze, seasonDir, archiveFile, slugify };
