@@ -1,4 +1,11 @@
 {
+  "8": [
+    {
+      "team": "UnDucks",
+      "url": "https://www.youtube.com/watch?v=g6bwLybXOnY",
+      "title": "UnDucks vs Flamingos Sep. 11 2026"
+    }
+  ],
   "13": [
     {
       "team": "Clockwork Orange",
@@ -9,6 +16,13 @@
       "team": "Reapers",
       "url": "https://www.youtube.com/watch?v=X3IxQvQO0KI",
       "title": "Reapers vs Clockwork Orange - September 14 2026"
+    }
+  ],
+  "14": [
+    {
+      "team": "UnDucks",
+      "url": "https://www.youtube.com/watch?v=-EsL8SVNj_w",
+      "title": "UnDucks vs Whalers Sep. 14, 2026"
     }
   ],
   "15": [
@@ -39,6 +53,13 @@
       "title": "Clockwork Orange vs Black Squadron 9/20/26"
     }
   ],
+  "22": [
+    {
+      "team": "UnDucks",
+      "url": "https://www.youtube.com/watch?v=y4nzGzZLGKY",
+      "title": "UnDucks vs Black Squadron Sep 25, 2026"
+    }
+  ],
   "24": [
     {
       "team": "Sk8 Balls",
@@ -49,6 +70,13 @@
       "team": "Reapers",
       "url": "https://www.youtube.com/watch?v=d5na5W6hepI",
       "title": "Reapers vs Sk8 Balls - September 25 2026"
+    }
+  ],
+  "29": [
+    {
+      "team": "UnDucks",
+      "url": "https://www.youtube.com/watch?v=3NOk36vNkSY",
+      "title": "UnDucks vs Mid Ice Crisis (10/2/26)"
     }
   ],
   "30": [
@@ -93,6 +121,13 @@
       "title": "Reapers vs Mid Ice Crisis October 9 2026"
     }
   ],
+  "38": [
+    {
+      "team": "UnDucks",
+      "url": "https://www.youtube.com/watch?v=uA6O3h8pwYY",
+      "title": "UnDucks vs Yellow Jackets (10/9/26)"
+    }
+  ],
   "40": [
     {
       "team": "Sk8 Balls",
@@ -124,6 +159,11 @@
       "team": "Sk8 Balls",
       "url": "https://www.youtube.com/watch?v=P6VecRN9S4o",
       "title": "2026.10.16 Sk8balls vs Unducks"
+    },
+    {
+      "team": "UnDucks",
+      "url": "https://www.youtube.com/watch?v=QKbC0eM6FzM",
+      "title": "UnDucks vs Sk8 Balls (10/16/26)"
     }
   ],
   "48": [
@@ -145,6 +185,18 @@
       "team": "Clockwork Orange",
       "url": "https://www.youtube.com/watch?v=YSQ0kOhi9Zo",
       "title": "Clockwork Orange vs Unducks 10/23/26"
+    },
+    {
+      "team": "UnDucks",
+      "url": "https://www.youtube.com/watch?v=GDFolBUp6BU",
+      "title": "UnDucks vs Clockwork Orange (10/23/26)"
+    }
+  ],
+  "55": [
+    {
+      "team": "UnDucks",
+      "url": "https://www.youtube.com/watch?v=cxB7Zy4k0B4",
+      "title": "UnDucks vs Kodiaks (10/26/26)"
     }
   ],
   "56": [
@@ -166,6 +218,13 @@
       "title": "Reapers vs Clockwork Orange October 30 2026"
     }
   ],
+  "59": [
+    {
+      "team": "UnDucks",
+      "url": "https://www.youtube.com/watch?v=_NYv-T7XMMg",
+      "title": "UnDucks vs Black Squadron (10/30/26)"
+    }
+  ],
   "61": [
     {
       "team": "Clockwork Orange",
@@ -178,6 +237,13 @@
       "team": "Sk8 Balls",
       "url": "https://www.youtube.com/watch?v=Xiq1lOqcyEg",
       "title": "2026.11.02 Sk8balls vs Green Goombas"
+    }
+  ],
+  "64": [
+    {
+      "team": "UnDucks",
+      "url": "https://www.youtube.com/watch?v=qIzaXeiVT8c",
+      "title": "UnDucks vs Kraken Cold Ones (11/6/26)"
     }
   ],
   "65": [
