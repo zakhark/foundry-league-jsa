@@ -1,0 +1,59 @@
+# Builds the site from the Google Sheet and publishes it to GitHub Pages.
+#
+# Runs on every push, on demand (Actions tab -> Run workflow), and on a
+# schedule built around game nights (Fri, Sun, Mon). Times are fixed in UTC,
+# converted from US Eastern Standard Time (UTC-5); during daylight saving time
+# they happen one hour later in local time.
+#   - 9 PM, 10 PM, 11 PM ET on game nights
+#   - 2 AM, 10 AM, 2 PM, 4 PM, 6 PM, 8 PM ET the next day (Sat, Mon, Tue)
+name: Build and deploy
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    # Sat/Mon/Tue UTC: 9-11 PM ET of the night before (02-04),
+    # then 2 AM, 10 AM, 2 PM, 4 PM, 6 PM ET (07, 15, 19, 21, 23)
+    - cron: "7 2,3,4,7,15,19,21,23 * * 1,2,6"
+    # Sun/Tue/Wed UTC 01: 8 PM ET of the day after a game night
+    - cron: "7 1 * * 0,2,3"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run fetch
+        env:
+          SHEET_ID: ${{ secrets.SHEET_ID }}
+      - name: Find new game videos (best effort)
+        run: npm run videos || echo "Video search failed; using saved game-videos.json"
+      - run: npm run build
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

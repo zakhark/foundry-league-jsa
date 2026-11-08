@@ -1,0 +1,25 @@
+# Local hosting: http://localhost:8080
+#   docker compose up -d --build
+# "builder" re-downloads the sheet and rebuilds every 15 minutes;
+# "web" serves the generated files with nginx.
+services:
+  builder:
+    build: .
+    environment:
+      REFRESH_SECONDS: "900"
+      SHEET_ID: ${SHEET_ID:?Set SHEET_ID in .env (see .env.example)}
+    volumes:
+      - site:/app/dist
+    restart: unless-stopped
+  web:
+    image: nginx:1.27-alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - site:/usr/share/nginx/html:ro
+      - ./docker/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - builder
+    restart: unless-stopped
+volumes:
+  site:

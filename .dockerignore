@@ -1,0 +1,7 @@
+node_modules
+dist
+data/*.xlsx
+.git
+.env
+.env.*
+CLAUDE.md
