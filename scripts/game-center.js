@@ -5,6 +5,14 @@
 //   npm run game-center -- --games 86188,88259-88270
 //                                       # or opens specific rink game pages (for games the
 //                                       # schedule page doesn't list, e.g. early-season ones)
+//   npm run game-center -- --new-season "https://foundryadulthockey.com/schedule/?league=9&season=177&level=628"
+//                                       # starts over for a new season: takes the rink's
+//                                       # league/season/level from its schedule URL
+//
+// Our game numbers restart every season, so game-center.json records which of
+// our seasons it belongs to ("ourSeason", from the S## Rosters tab). The site
+// ignores it when the workbook is on a different season, and this script
+// refuses to add to it until it's started over with --new-season.
 //
 // The rink's schedule page is built in the browser by a script, so it has to be
 // rendered first. The schedule is set for the season, so run this once per
@@ -86,18 +94,40 @@ const norm = (s) => s.toLowerCase().replace(/\(.*?\)/g, '').replace(/[^a-z0-9]/g
 
 function main() {
   const D = load(config.dataFile);
-  const saved = fs.existsSync(FILE) ? JSON.parse(fs.readFileSync(FILE, 'utf8')) : {};
+  let args = process.argv.slice(2);
+  let saved = fs.existsSync(FILE) ? JSON.parse(fs.readFileSync(FILE, 'utf8')) : null;
+
+  if (args[0] === '--new-season') {
+    let u;
+    try { u = new URL(args[1]); } catch { u = null; }
+    const ids = u && ['league', 'season', 'level'].map((k) => Number(u.searchParams.get(k)));
+    if (!ids || ids.some((n) => !n)) {
+      throw new Error('Usage: npm run game-center -- --new-season "<rink schedule URL with league=, season= and level=>"');
+    }
+    const [league, season, level] = ids;
+    if (saved && saved.season === season && saved.league === league && saved.level === level && saved.ourSeason !== String(D.season)) {
+      throw new Error(`That URL is still the rink's season ${season}, the one game-center.json already uses. Use the rink's schedule URL for the new season.`);
+    }
+    console.log(`Starting over for our season ${D.season} (rink league ${league}, season ${season}, level ${level})`);
+    saved = { site: `${u.protocol}//${u.host}`, league, season, level, ourSeason: String(D.season) };
+    args = args.slice(2);
+  } else if (!saved) {
+    throw new Error('No game-center.json yet. Start with: npm run game-center -- --new-season "<rink schedule URL>"');
+  } else if (saved.ourSeason !== String(D.season)) {
+    throw new Error(
+      `game-center.json is for season ${saved.ourSeason}, but the workbook is on season ${D.season}. ` +
+        'Start over with: npm run game-center -- --new-season "<the rink\'s schedule URL for the new season>"'
+    );
+  }
+
   const gc = {
-    _comment: 'Links to the rink\'s TimeToScore game center. Written by "npm run game-center"; safe to edit by hand.',
-    site: 'https://foundryadulthockey.com',
-    league: 9, season: 177, level: 628,
+    _comment: 'Links to the rink\'s TimeToScore game center for one of our seasons. Written by "npm run game-center"; safe to edit by hand.',
     teams: {}, games: {},
     ...saved,
   };
   const scheduleUrl = `${gc.site}/schedule/?league=${gc.league}&season=${gc.season}&level=${gc.level}`;
 
   let rows;
-  const args = process.argv.slice(2);
   if (args[0] === '--games') {
     // Specific rink game IDs, e.g. "86188,88259-88270": open each game page.
     const ids = (args[1] || '').split(',').flatMap((part) => {

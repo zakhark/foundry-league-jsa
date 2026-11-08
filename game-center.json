@@ -1,9 +1,10 @@
 {
-  "_comment": "Links to the rink's TimeToScore game center. Written by \"npm run game-center\"; safe to edit by hand.",
+  "_comment": "Links to the rink's TimeToScore game center for one of our seasons. Written by \"npm run game-center\"; safe to edit by hand.",
   "site": "https://foundryadulthockey.com",
   "league": 9,
   "season": 177,
   "level": 628,
+  "ourSeason": "15",
   "teams": {
     "Whalers": 7125,
     "Kraken Cold Ones": 13094,

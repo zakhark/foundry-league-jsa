@@ -323,8 +323,13 @@ function load(file) {
 
   // ---------- Rink game center links (optional; see scripts/game-center.js) ----------
   const gameCenterTeams = new Map();
-  if (fs.existsSync(GAME_CENTER_FILE)) {
-    const gc = JSON.parse(fs.readFileSync(GAME_CENTER_FILE, 'utf8'));
+  const gcRaw = fs.existsSync(GAME_CENTER_FILE) ? JSON.parse(fs.readFileSync(GAME_CENTER_FILE, 'utf8')) : null;
+  // Game numbers restart every season, so only use links made for this season.
+  if (gcRaw && String(gcRaw.ourSeason) !== String(season)) {
+    warn(`${GAME_CENTER_FILE} is for season ${gcRaw.ourSeason}, not ${season}; rink links are left out. Run: npm run game-center -- --new-season "<rink schedule URL>"`);
+  }
+  if (gcRaw && String(gcRaw.ourSeason) === String(season)) {
+    const gc = gcRaw;
     const q = `league=${gc.league}&season=${gc.season}`;
     for (const [num, id] of Object.entries(gc.games || {})) {
       const g = gameByNum.get(Number(num));
