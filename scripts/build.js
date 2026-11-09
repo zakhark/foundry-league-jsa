@@ -352,8 +352,8 @@ if (logoFiles.length) {
 {
   const r = '';
   const played = D.games.filter((g) => g.played);
-  const lastWeek = played.length ? Math.max(...played.map((g) => g.week || 0)) : 0;
-  const recent = played.filter((g) => g.week === lastWeek);
+  // The most recent results, newest first (game numbers run in date order).
+  const recent = [...played].sort((a, b) => (b.date || 0) - (a.date || 0) || b.num - a.num).slice(0, config.recentCount);
   const upcoming = D.games.filter((g) => !g.played && !g.tbd).slice(0, config.upcomingCount);
   const scorers = [...D.players].filter((p) => p.goals).sort((a, b) => b.goals - a.goals || a.name.localeCompare(b.name)).slice(0, 10);
   const pim = [...D.players].filter((p) => p.pim).sort((a, b) => b.pim - a.pim || a.name.localeCompare(b.name)).slice(0, 5);
@@ -368,8 +368,9 @@ ${standingsTable(r)}
 
 <div class="grid-2">
   <section>
-    <h2>Latest results <small class="muted">Week ${lastWeek}</small></h2>
+    <h2>Latest results</h2>
     <div class="cards">${recent.map((g) => gameCard(g, r)).join('') || '<p class="muted">No games played yet.</p>'}</div>
+    ${recent.length ? '<p><a href="schedule.html?show=results">All results →</a></p>' : ''}
   </section>
   <section>
     <h2>Up next</h2>
@@ -432,7 +433,7 @@ ${table(
 <h1>Schedule</h1>
 <div class="toolbar">
   <label>Team <select data-filter="team"><option value="">All teams</option>${options}</select></label>
-  <label class="check"><input type="checkbox" data-filter="upcoming"> Upcoming only</label>
+  <label>Show <select data-filter="show"><option value="">All games</option><option value="results">Results</option><option value="upcoming">Upcoming</option></select></label>
   ${updates ? '<a href="#changes">Schedule changes</a>' : ''}
 </div>
 ${allTeamFiles(r)}

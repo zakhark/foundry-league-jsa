@@ -37,8 +37,9 @@ module.exports = {
     'Sk8 Balls': 'Sk8Balls',
   },
 
-  // Number of upcoming games shown on the home page.
+  // Number of upcoming games and latest results shown on the home page.
   upcomingCount: 8,
+  recentCount: 8,
 
   // Team calendars (.ics) and BenchApp import files (.csv).
   // Game times in the sheet are local times in this time zone.

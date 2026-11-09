@@ -116,7 +116,7 @@ a.team:hover { color: var(--accent); }
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; color: var(--text); display: block; }
 a.card:hover { text-decoration: none; border-color: var(--accent); }
 .game-card .meta { display: flex; justify-content: space-between; font-size: .8rem; color: var(--muted); }
-.game-card .line { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; }
+.game-card .line { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; min-height: calc(1.1rem * 1.5 + 8px); } /* room for a score (.score), so result and upcoming cards are the same height */
 .game-card .line.won { font-weight: 700; }
 .game-card .final { font-weight: 600; color: var(--text); }
 .score { font-size: 1.1rem; }
@@ -164,7 +164,6 @@ section[id] { scroll-margin-top: calc(var(--header-h) + 64px); }
 .toolbar { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: center; margin: 12px 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 14px; position: sticky; top: var(--header-h); z-index: 5; }
 .toolbar label { display: inline-flex; align-items: center; gap: 8px; font-size: .9rem; color: var(--muted); }
 .toolbar select, .toolbar input[type="search"] { font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; min-width: 180px; }
-.toolbar .check { color: var(--text); }
 @media (max-width: 720px) { .toolbar { position: static; } .toolbar label { width: 100%; } .toolbar select, .toolbar input[type="search"] { flex: 1; min-width: 0; } }
 .week h2 { margin-top: 1.5rem; }
 [hidden] { display: none !important; }
