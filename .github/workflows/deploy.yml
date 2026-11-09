@@ -1,6 +1,7 @@
-# Builds the site from the Google Sheet and publishes it to GitHub Pages, and
-# also to Cloudflare Pages when the CLOUDFLARE_API_TOKEN and
-# CLOUDFLARE_ACCOUNT_ID secrets are set (see README).
+# Builds the site from the Google Sheet once, then publishes it to GitHub Pages
+# and, when the CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID secrets are set
+# (see README), to Cloudflare Pages. The two deploys are separate jobs, so a
+# problem with one host doesn't stop the other.
 #
 # Runs on every push, on demand (Actions tab -> Run workflow), and on a
 # schedule built around game nights (Fri, Sun, Mon). Times are fixed in UTC,
@@ -33,6 +34,8 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      cloudflare: ${{ steps.cf.outputs.enabled }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -49,16 +52,16 @@ jobs:
       - name: Check for Cloudflare secrets
         id: cf
         run: echo "enabled=${{ secrets.CLOUDFLARE_API_TOKEN != '' && secrets.CLOUDFLARE_ACCOUNT_ID != '' }}" >> "$GITHUB_OUTPUT"
-      - name: Deploy to Cloudflare Pages
-        if: steps.cf.outputs.enabled == 'true'
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name=${{ vars.CLOUDFLARE_PROJECT || 'foundry-league-jsa' }} --branch=main --commit-dirty=true
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
+      - name: Save the site for the Cloudflare deploy
+        if: steps.cf.outputs.enabled == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: site
+          path: dist
+          retention-days: 1
 
   deploy:
     needs: build
@@ -69,3 +72,20 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+
+  deploy-cloudflare:
+    needs: build
+    if: needs.build.outputs.cloudflare == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: site
+          path: dist
+      - uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=${{ vars.CLOUDFLARE_PROJECT || 'foundry-league-jsa' }} --branch=main --commit-hash=${{ github.sha }}
