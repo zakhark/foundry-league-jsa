@@ -62,7 +62,21 @@ The `builder` container re-downloads the sheet and rebuilds every 15 minutes (`R
 3. In the repo, go to **Settings → Pages → Source** and pick **GitHub Actions**.
 4. The workflow in `.github/workflows/deploy.yml` builds and publishes the site on every push and on game nights and the day after: 9, 10 and 11 PM on Fri/Sun/Mon, then 2 AM, 10 AM, 2 PM, 4 PM, 6 PM and 8 PM the next day (Eastern Standard Time; one hour later during daylight saving). It also runs when you click **Actions → Build and deploy → Run workflow** after entering scores.
 
-Other free static hosts work the same way: Cloudflare Pages and Netlify both use build command `npm run all` and output directory `dist`, plus the `SHEET_ID` environment variable.
+## Also publishing to Cloudflare Pages (optional)
+
+The same workflow can upload each build to Cloudflare Pages too, so both sites always match. It's skipped until the Cloudflare secrets exist.
+
+1. Create the Pages project once. With Node installed, run `npx wrangler login`, then `npx wrangler pages project create foundry-league-jsa --production-branch main`. The site will be at `https://foundry-league-jsa.pages.dev` (or the name Cloudflare reports if that one is taken). To use a different project name, also set a repository **variable** `CLOUDFLARE_PROJECT` to that name.
+2. Create an API token: Cloudflare dashboard → **My Profile → API Tokens → Create Token → Create Custom Token**, with one permission, **Account → Cloudflare Pages → Edit**.
+3. Find your account ID: run `npx wrangler whoami`, or look on the **Workers & Pages** overview page.
+4. Add both as repository secrets:
+   ```sh
+   gh secret set CLOUDFLARE_API_TOKEN
+   gh secret set CLOUDFLARE_ACCOUNT_ID
+   ```
+5. Run the workflow (**Actions → Build and deploy → Run workflow**). The "Deploy to Cloudflare Pages" step publishes the site.
+
+Other static hosts, such as Netlify, can also build the site themselves: build command `npm run all`, output directory `dist`, plus the `SHEET_ID` environment variable.
 
 ## Customising
 
