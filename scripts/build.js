@@ -435,6 +435,7 @@ ${table(
   <label class="check"><input type="checkbox" data-filter="upcoming"> Upcoming only</label>
   ${updates ? '<a href="#changes">Schedule changes</a>' : ''}
 </div>
+${allTeamFiles(r)}
 ${sections}
 ${updates}`;
   page({ file: 'schedule.html', title: 'Schedule', body });
@@ -505,6 +506,60 @@ ${table([{ label: 'Team' }, { label: 'Rank', cls: 'num' }, { label: 'Record' }, 
   page({ file: `games/${g.num}.html`, title, body });
 }
 
+// ---------- Calendars and BenchApp files ----------
+// calendar/<team>.ics are subscribable team calendars; benchapp/<team>.csv is
+// BenchApp's schedule import file. See scripts/calendar.js.
+{
+  const { ics, benchAppCsv } = require('./calendar');
+  const dated = D.games.filter((g) => !g.tbd && g.date);
+  const write = (file, text) => {
+    fs.mkdirSync(path.dirname(path.join(OUT, file)), { recursive: true });
+    fs.writeFileSync(path.join(OUT, file), text);
+  };
+  for (const t of D.standings) {
+    const games = dated.filter((g) => g.home === t.name || g.away === t.name);
+    write(`calendar/${t.slug}.ics`, ics({ name: `${t.name} · ${LEAGUE}`, games, season: D.season, builtAt }));
+    write(`benchapp/${t.slug}.csv`, benchAppCsv(games));
+  }
+}
+// The three links for a team: BenchApp file, calendar subscription, copy calendar link.
+// "Subscribe" and "Copy" get their behaviour from app.js.
+function teamFileLinks(t, r, short = false) {
+  const CAL_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>';
+  const icsHref = `${r}calendar/${t.slug}.ics`;
+  return [
+    `<a class="yt gc" href="${r}benchapp/${t.slug}.csv" download title="BenchApp's Import Events file with ${esc(t.name)} games">${SHEET_ICON}${short ? 'BenchApp CSV' : 'BenchApp import (CSV)'}</a>`,
+    `<a class="yt gc" href="${icsHref}" data-subscribe title="Add ${esc(t.name)} games to your calendar app; it stays up to date">${CAL_ICON}${short ? 'Subscribe' : 'Subscribe to calendar'}</a>`,
+    `<button type="button" class="yt gc" data-copy="${icsHref}" title="Copy the calendar link, e.g. for BenchApp's calendar sync or Google Calendar (From URL)">${short ? 'Copy link' : 'Copy calendar link'}</button>`,
+  ];
+}
+// How to use the files (same text on team pages and the Schedule page).
+function calendarHelp() {
+  const len = `${Math.floor(config.gameMinutes / 60)}h${config.gameMinutes % 60 ? ` ${config.gameMinutes % 60}m` : ''}`;
+  return `<ul class="cal-help-list">
+  <li><b>BenchApp, one-time import:</b> download the CSV, then in BenchApp go to <a href="https://www.benchapp.com/schedule/import" target="_blank" rel="noopener">Schedule → Import</a> and upload it. Team names must match BenchApp's exactly (including your own team), or BenchApp creates new teams. Duplicates are flagged for review.</li>
+  <li><b>BenchApp, keep in sync:</b> copy the calendar link and paste it into BenchApp's calendar sync, so schedule changes come through automatically.</li>
+  <li><b>Phone or computer calendar:</b> "Subscribe" adds the games and keeps them up to date. In Google Calendar, use <i>Other calendars → From URL</i> with the copied link.</li>
+</ul>
+<p class="muted small">Games are ${len} long. Playoff games are added once their teams are known.</p>`;
+}
+// Team page: the team's links plus a "How to use" box.
+function calendarLinks(t, r) {
+  return `<div class="cal-links">
+  ${teamFileLinks(t, r).join('\n  ')}
+  <details class="cal-help"><summary>How to use</summary>${calendarHelp()}</details>
+</div>`;
+}
+// Schedule page: a collapsed section with every team's links.
+function allTeamFiles(r) {
+  const rows = D.standings.map((t) => `<tr>${td(teamLink(t.name, r, { bold: true }))}<td><div class="cal-links">${teamFileLinks(t, r, true).join('')}</div></td></tr>`);
+  return `<details class="panel team-files">
+  <summary><b>BenchApp import &amp; team calendars</b> <span class="muted small">Each team's schedule as a BenchApp file or a calendar you can subscribe to</span></summary>
+  ${calendarHelp()}
+  ${table([{ label: 'Team' }, { label: 'Files' }], rows)}
+</details>`;
+}
+
 // ---------- Teams ----------
 {
   const r = '../';
@@ -560,7 +615,9 @@ ${table([{ label: 'Team' }, { label: 'Rank', cls: 'num' }, { label: 'Record' }, 
 ${table([{ label: '#', cls: 'num' }, { label: 'Player', sort: 'text' }, { label: 'Pos', sort: 'text' }, { label: 'G', cls: 'num', title: 'Goals for this team' }, { label: 'Team G%', cls: 'num', title: "Share of the team's goals (regular season)" }, { label: 'SO', cls: 'num', title: 'Shootout goals' }, { label: 'PIM', cls: 'num' }], roster, { sortable: true })}
 <p class="muted small">Stats count games played for ${esc(t.name)} only.${subsUsed.length ? ` ${esc(t.name)} have used ${subsUsed.length} sub${subsUsed.length === 1 ? '' : 's'} this season.` : ''}</p>
 </section>
-<section id="games"><h2>Schedule &amp; results</h2>${table(SCHEDULE_COLS, scheduleRows(games, r, t.name))}</section>
+<section id="games"><h2>Schedule &amp; results</h2>
+${calendarLinks(t, r)}
+${table(SCHEDULE_COLS, scheduleRows(games, r, t.name))}</section>
 <section id="h2h"><h2>Head to head</h2>${h2h.length ? table([{ label: 'Opponent', sort: 'text' }, { label: 'GP', cls: 'num' }, { label: 'Record' }, { label: 'GF', cls: 'num' }, { label: 'GA', cls: 'num' }, { label: 'Diff', cls: 'num' }], h2h, { sortable: true }) : '<p class="muted">No games played yet.</p>'}</section>
 <section id="goalies"><h2>Goalies</h2>${goalies.length ? table([{ label: 'Goalie' }, { label: 'Role' }, { label: 'GP', cls: 'num' }, { label: 'Record' }, { label: 'GA', cls: 'num' }, { label: 'GAA', cls: 'num' }, { label: 'SHO', cls: 'num' }], goalies) : '<p class="muted">No games played yet.</p>'}</section>`;
     page({ file: `teams/${t.slug}.html`, title: t.name, body });

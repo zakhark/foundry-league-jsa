@@ -31,4 +31,24 @@ module.exports = {
 
   // Number of upcoming games shown on the home page.
   upcomingCount: 8,
+
+  // Team calendars (.ics) and BenchApp import files (.csv).
+  // Game times in the sheet are local times in this time zone.
+  timeZone: 'America/New_York',
+  // How long a game takes, for calendar events and BenchApp ("H:MM").
+  gameMinutes: 90,
+  // Full names and street addresses for the sheet's arena codes, used as the
+  // event location (the rink goes in the event notes). Unknown codes are shown as they are.
+  arenas: {
+    JSA: { name: 'Jersey Shore Arena', address: '1215 Wyckoff Rd, Wall Township, NJ 07727' },
+    Howell: { name: 'Howell Ice Arena', address: '269 Squankum Rd, Farmingdale, NJ 07727' },
+  },
+  // Team names to use in BenchApp files and calendars when they differ from
+  // the sheet. BenchApp matches teams by exact name, so these must be spelled
+  // exactly as the teams are named in BenchApp.
+  benchAppNames: {
+    'Sk8 Balls': 'Sk8Balls',
+  },
+  // The public site address, used for links inside calendar events.
+  siteUrl: process.env.SITE_URL || 'https://zakhark.github.io/foundry-league-jsa/',
 };
