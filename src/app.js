@@ -43,6 +43,42 @@
     });
   });
 
+  // Game video: clicking the thumbnail swaps in the YouTube player; camera
+  // buttons switch between the teams' videos of the same game.
+  document.querySelectorAll('[data-player]').forEach((box) => {
+    const frame = box.querySelector('.frame');
+    const open = box.querySelector('[data-open]');
+    const id = /^[\w-]{11}$/;
+    const play = (videoId) => {
+      if (!id.test(videoId)) return;
+      const iframe = document.createElement('iframe');
+      iframe.src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0`;
+      iframe.title = 'Game video';
+      iframe.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
+      iframe.allowFullscreen = true;
+      iframe.referrerPolicy = 'strict-origin-when-cross-origin'; // YouTube refuses embeds without a referrer
+      frame.replaceChildren(iframe);
+    };
+    box.addEventListener('click', (e) => {
+      const facade = e.target.closest('.facade');
+      const angle = e.target.closest('.angle');
+      if (facade) {
+        e.preventDefault();
+        play(facade.dataset.id);
+      } else if (angle) {
+        e.preventDefault();
+        box.querySelectorAll('.angle').forEach((a) => a.setAttribute('aria-pressed', String(a === angle)));
+        if (open) open.href = angle.href;
+        const f = frame.querySelector('.facade');
+        if (f) { // not playing yet: just show the other camera's thumbnail
+          f.dataset.id = angle.dataset.id;
+          f.href = angle.href;
+          f.querySelector('img').src = `https://i.ytimg.com/vi/${angle.dataset.id}/hqdefault.jpg`;
+        } else play(angle.dataset.id);
+      }
+    });
+  });
+
   // Filters: team select, name search, upcoming-only checkbox.
   const team = document.querySelector('[data-filter="team"]');
   const name = document.querySelector('[data-filter="name"]');

@@ -135,6 +135,24 @@ function videoCard(g, r) {
 </div>`;
 }
 
+// The game's video, played on the page. Until it's clicked it's just a
+// thumbnail linking to YouTube (so nothing loads from YouTube but the image,
+// and it still works without JavaScript); app.js swaps in the player. When
+// more than one team filmed the game, buttons switch between their cameras.
+function videoPlayer(g) {
+  const vids = g.videos.map((v) => ({ ...v, id: youTubeId(v.url) })).filter((v) => v.id);
+  if (!vids.length) return '';
+  const first = vids[0];
+  const label = (v, i) => (v.team ? `${esc(v.team)} camera` : `Video ${i + 1}`);
+  const angles = vids.length > 1
+    ? `<span class="muted">Camera:</span>${vids.map((v, i) => `<a class="angle" href="${esc(v.url)}" target="_blank" rel="noopener" data-id="${v.id}" title="${esc(v.title)}" aria-pressed="${i === 0}">${label(v, i)}</a>`).join('')}`
+    : `<span class="muted">${first.team ? `${esc(first.team)} camera` : 'Game video'}</span>`;
+  return `<div class="player" data-player>
+  <div class="frame"><a class="facade" href="${esc(first.url)}" target="_blank" rel="noopener" data-id="${first.id}" aria-label="Play the video of ${esc(g.away)} at ${esc(g.home)}"><img src="https://i.ytimg.com/vi/${first.id}/hqdefault.jpg" alt="" width="480" height="360" loading="lazy"><span class="play">${YT_ICON}</span></a></div>
+  <div class="angles">${angles}<a class="open" href="${esc(first.url)}" target="_blank" rel="noopener" data-open>Open on YouTube ↗</a></div>
+</div>`;
+}
+
 function scoreText(g) {
   if (!g.played) return '';
   const suffix = g.so ? ' SO' : g.ot ? ' OT' : '';
@@ -220,14 +238,24 @@ function standingsTable(r, compact = false) {
     { label: 'PTS', cls: 'num' }, { label: 'P%', cls: 'num' , title: 'Points percentage' },
     { label: 'GF', cls: 'num' }, { label: 'GA', cls: 'num' }, { label: 'DIFF', cls: 'num' },
   ];
-  if (!compact) cols.push({ label: 'PIM', cls: 'num', title: 'Penalty minutes' }, { label: 'Streak', sort: false }, { label: 'Last 5', sort: false });
+  if (!compact) {
+    cols.push(
+      { label: 'GF/G', cls: 'num', title: 'Goals for per game, with the league rank (offense)' },
+      { label: 'GA/G', cls: 'num', title: 'Goals against per game, with the league rank (defense)' },
+      { label: 'PIM', cls: 'num', title: 'Penalty minutes' }, { label: 'Streak', sort: false }, { label: 'Last 5', sort: false },
+    );
+  }
+  // A per-game rate with its league rank, e.g. "4.50 #2". Sorts by the rate.
+  // Lower GA/G is better, so it sorts low-to-high first via a negated value.
+  const rate = (v, rank, what, lowIsBetter) => (v === null ? td('–', 'num', lowIsBetter ? -999 : -1)
+    : td(`${fmt2(v)} <small class="rank" title="${ordinal(rank)} in ${what}">#${rank}</small>`, 'num nowrap', lowIsBetter ? -v : v));
   const rows = D.standings.map((t) => {
     const cells = [
       td(t.rank, 'num'), td(teamLink(t.name, r, { bold: true }), '', t.name), td(t.gp, 'num'),
       td(t.w, 'num'), td(t.l, 'num'), td(t.otl, 'num'), td(`<b>${t.pts}</b>`, 'num', t.pts), td(pct(t.pct), 'num', t.pct),
       td(t.gf, 'num'), td(t.ga, 'num'), td(signed(t.diff), `num ${t.diff > 0 ? 'pos' : t.diff < 0 ? 'neg' : ''}`, t.diff),
     ];
-    if (!compact) cells.push(td(t.pim, 'num'), td(esc(t.streak)), td(form(t.last5)));
+    if (!compact) cells.push(rate(t.gfpg, t.offRank, 'offense'), rate(t.gapg, t.defRank, 'defense', true), td(t.pim, 'num'), td(esc(t.streak)), td(form(t.last5)));
     return `<tr>${cells.join('')}</tr>`;
   });
   return table(cols, rows, { sortable: true });
@@ -316,6 +344,7 @@ if (logoFiles.length) {
   const goalies = D.goalies.filter((g) => g.main && g.gp >= 3).sort((a, b) => a.gaa - b.gaa).slice(0, 5);
   const leaderList = (items, val) => `<ol class="leaders">${items.map((p) => `<li><span>${playerLink(p.name, r)} <small class="muted">${esc(p.team)}</small></span><b>${val(p)}</b></li>`).join('')}</ol>`;
 
+
   const body = `
 <h1>${esc(SEASON)} Standings</h1>
 <p class="lede">${played.filter((g) => !g.playoff).length} games played · ${D.games.filter((g) => !g.played && !g.tbd).length} remaining. ${config.points.win} points for a win, ${config.points.otLoss} for an overtime or shootout loss.</p>
@@ -402,6 +431,8 @@ for (const g of D.games) {
   const periods = ['1', '2', '3', 'OT', 'SO'];
   const usedPeriods = periods.filter((p) => ['1', '2', '3'].includes(p) || g.events.some((e) => e.period === p) || (p === 'OT' && g.ot) || (p === 'SO' && g.so));
   const goalsIn = (team, p) => g.events.filter((e) => e.team === team && e.period === p && /goal/i.test(e.type)).reduce((n, e) => n + e.qty, 0);
+  // Videos that can't be played on the page (no recognisable video ID) stay as plain links.
+  const linkOnly = g.videos.filter((v) => !youTubeId(v.url));
 
   let body = `<p class="crumbs"><a href="${r}schedule.html">Schedule</a> › Game ${g.num}</p>
 <div class="scoreboard">
@@ -411,7 +442,8 @@ for (const g of D.games) {
 </div>
 <p class="center-text muted">${dateLabel(g)} · ${esc(g.time)} · ${place(g)} · Week ${g.week ?? '–'}${g.playoff ? ' · Playoffs' : ''}</p>
 ${g.comment ? `<p class="note">${esc(g.comment)}</p>` : ''}
-${g.videos.length || g.gameCenter ? `<div class="videos">${g.videos.map((v) => `<a class="yt" href="${esc(v.url)}" target="_blank" rel="noopener" title="${esc(v.title)}">${YT_ICON}Watch${v.team ? ` · ${esc(v.team)} video` : ''}</a>`).join('')}${g.gameCenter ? `<a class="yt gc" href="${esc(g.gameCenter.url)}" target="_blank" rel="noopener" title="This game on the rink's TimeToScore game center">${GC_ICON}Rink game center</a>${g.played ? `<a class="yt gc" href="${esc(g.gameCenter.scoresheet)}" target="_blank" rel="noopener" title="Official scoresheet (PDF) from the rink">${SHEET_ICON}Official scoresheet</a>` : ''}` : ''}</div>` : ''}`;
+${videoPlayer(g)}
+${linkOnly.length || g.gameCenter ? `<div class="videos">${linkOnly.map((v) => `<a class="yt" href="${esc(v.url)}" target="_blank" rel="noopener" title="${esc(v.title)}">${YT_ICON}Watch${v.team ? ` · ${esc(v.team)} video` : ''}</a>`).join('')}${g.gameCenter ?`<a class="yt gc" href="${esc(g.gameCenter.url)}" target="_blank" rel="noopener" title="This game on the rink's TimeToScore game center">${GC_ICON}Rink game center</a>${g.played ? `<a class="yt gc" href="${esc(g.gameCenter.scoresheet)}" target="_blank" rel="noopener" title="Official scoresheet (PDF) from the rink">${SHEET_ICON}Official scoresheet</a>` : ''}` : ''}</div>` : ''}`;
 
   if (g.played) {
     const periodTable = table(
@@ -473,11 +505,17 @@ ${table([{ label: 'Team' }, { label: 'Rank', cls: 'num' }, { label: 'Record' }, 
     const games = D.games.filter((g) => g.home === t.name || g.away === t.name);
     const roster = t.roster.map((rp) => {
       const p = playerByName.get(rp.name.toLowerCase());
-      let goals = 0, so = 0, pim = 0, gp = 0;
-      for (const [, e] of p.log) if (e.team === t.name) { goals += e.goals; so += e.soGoals; pim += e.pim; gp++; }
+      let goals = 0, so = 0, pim = 0, gp = 0, regGoals = 0;
+      for (const [num, e] of p.log) {
+        if (e.team !== t.name) continue;
+        goals += e.goals; so += e.soGoals; pim += e.pim; gp++;
+        const g = D.games.find((x) => x.num === num);
+        if (g && !g.playoff) regGoals += e.goals;
+      }
+      const share = t.gf ? regGoals / t.gf : null;
       return `<tr>${[
         td(esc(rp.number), 'num', Number(rp.number) || 999), td(`${playerLink(rp.name, r)}${rp.captain ? ' <i class="badge" title="Captain">C</i>' : ''}`, '', rp.name),
-        td(esc(rp.position), '', rp.position), td(goals, 'num'), td(so || '', 'num', so), td(pim, 'num'),
+        td(esc(rp.position), '', rp.position), td(goals, 'num'), td(share ? pct(share) : '', 'num', share ?? -1), td(so || '', 'num', so), td(pim, 'num'),
       ].join('')}</tr>`;
     });
     const h2h = [...t.h2h.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([opp, h]) =>
@@ -503,7 +541,7 @@ ${table([{ label: 'Team' }, { label: 'Rank', cls: 'num' }, { label: 'Record' }, 
   <a href="#roster">Roster</a><a href="#games">Schedule</a><a href="#h2h">Head to head</a><a href="#goalies">Goalies</a>
 </div>
 <section id="roster"><h2>Roster</h2>
-${table([{ label: '#', cls: 'num' }, { label: 'Player', sort: 'text' }, { label: 'Pos', sort: 'text' }, { label: 'G', cls: 'num', title: 'Goals for this team' }, { label: 'SO', cls: 'num', title: 'Shootout goals' }, { label: 'PIM', cls: 'num' }], roster, { sortable: true })}
+${table([{ label: '#', cls: 'num' }, { label: 'Player', sort: 'text' }, { label: 'Pos', sort: 'text' }, { label: 'G', cls: 'num', title: 'Goals for this team' }, { label: 'Team G%', cls: 'num', title: "Share of the team's goals (regular season)" }, { label: 'SO', cls: 'num', title: 'Shootout goals' }, { label: 'PIM', cls: 'num' }], roster, { sortable: true })}
 <p class="muted small">Stats count games played for ${esc(t.name)} only.${subsUsed.length ? ` ${esc(t.name)} have used ${subsUsed.length} sub${subsUsed.length === 1 ? '' : 's'} this season.` : ''}</p>
 </section>
 <section id="games"><h2>Schedule &amp; results</h2>${table(SCHEDULE_COLS, scheduleRows(games, r, t.name))}</section>
@@ -533,7 +571,8 @@ function ordinal(n) {
         td(playerLink(p.name, r), '', p.name),
         td(p.teams.length ? p.teams.map((n) => teamLink(n, r)).join('<br>') : '<span class="muted">Sub pool</span>', '', p.team || 'zzz'),
         td(esc(p.number), 'num', Number(p.number) || 999), td(esc(p.position || 'Sub'), '', p.position),
-        td(p.goals, 'num'), td(p.soGoals || '', 'num', p.soGoals), td(p.subGoals || '', 'num', p.subGoals),
+        td(p.goals, 'num'), td(p.teamGoalPct ? pct(p.teamGoalPct) : '', 'num', p.teamGoalPct ?? -1),
+        td(p.soGoals || '', 'num', p.soGoals), td(p.subGoals || '', 'num', p.subGoals),
         td(p.pim, 'num'), td(p.subGames || '', 'num', p.subGames),
       ].join('')}</tr>`;
     });
@@ -544,7 +583,9 @@ function ordinal(n) {
 </div>
 ${table([
   { label: 'Player', sort: 'text' }, { label: 'Team', sort: 'text' }, { label: '#', cls: 'num' }, { label: 'Pos', sort: 'text' },
-  { label: 'G', cls: 'num', title: 'Goals (all teams)' }, { label: 'SO', cls: 'num', title: 'Shootout goals' },
+  { label: 'G', cls: 'num', title: 'Goals (all teams)' },
+  { label: 'Team G%', cls: 'num', title: "Share of their team's goals: regular-season goals for their roster team divided by that team's goals for" },
+  { label: 'SO', cls: 'num', title: 'Shootout goals' },
   { label: 'Sub G', cls: 'num', title: 'Goals scored while subbing for another team' },
   { label: 'PIM', cls: 'num', title: 'Penalty minutes' }, { label: 'Subbed', cls: 'num', title: 'Games played as a sub' },
 ], rows, { sortable: true })}
@@ -572,7 +613,7 @@ ${table([
   <h1>${p.number ? `<span class="muted">#${esc(p.number)}</span> ` : ''}${esc(p.name)}${p.captain ? ' <i class="badge" title="Captain">C</i>' : ''}</h1>
   <p>${p.teams.length ? p.teams.map((n) => teamLink(n, pr)).join(' · ') : 'Sub pool'}${p.position ? ` · ${esc(p.position)}` : ''}</p>
 </div>
-<div class="tiles">${tile('Goals', p.goals)}${tile('Shootout goals', p.soGoals)}${tile('PIM', p.pim)}${tile('Games subbed', p.subGames)}</div>
+<div class="tiles">${tile('Goals', p.goals)}${p.teamGoalPct !== null ? tile('Team goal %', pct(p.teamGoalPct), `${p.teamGoals} of ${teamOf(p.team).gf} ${esc(p.team)} goals`) : ''}${tile('Shootout goals', p.soGoals)}${tile('PIM', p.pim)}${tile('Games subbed', p.subGames)}</div>
 ${asGoalie.length ? `<h2>Goaltending</h2>${table([{ label: 'Team' }, { label: 'Role' }, { label: 'GP', cls: 'num' }, { label: 'Record' }, { label: 'GA', cls: 'num' }, { label: 'GAA', cls: 'num' }, { label: 'SHO', cls: 'num' }],
   asGoalie.map((s) => `<tr>${[td(teamLink(s.team, pr)), td(s.main ? 'Regular' : 'Sub'), td(s.gp, 'num'), td(rec(s)), td(s.ga, 'num'), td(fmt2(s.gaa), 'num'), td(s.sho, 'num')].join('')}</tr>`))}` : ''}
 <h2>Game log</h2>
