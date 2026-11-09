@@ -196,7 +196,6 @@ section[id] { scroll-margin-top: calc(var(--header-h) + 64px); }
 .team-logo { width: 96px; height: 96px; border-radius: 14px; object-fit: cover; background: #fff; box-shadow: 0 0 0 1px var(--line), 0 2px 8px rgba(0,0,0,.08); flex: none; }
 .card-logo { width: 48px; height: 48px; border-radius: 8px; object-fit: cover; background: #fff; box-shadow: 0 0 0 1px var(--line); margin-bottom: 4px; }
 @media (max-width: 520px) { .team-logo { width: 72px; height: 72px; } .team-head.has-logo { gap: 12px; } }
-.card-logo.initials { display: grid; place-items: center; color: #fff; font-weight: 800; font-size: 1.05rem; letter-spacing: .02em; box-shadow: none; }
 /* Videos */
 h2.split { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
 h2.split a { font-weight: 500; }
@@ -235,3 +234,5 @@ h2.split a { font-weight: 500; }
 .angles .open { margin-left: auto; }
 /* League rank next to a per-game rate */
 small.rank { color: var(--muted); font-size: .75em; margin-left: 2px; }
+/* Schedule rows open the game page */
+tr.linked { cursor: pointer; }

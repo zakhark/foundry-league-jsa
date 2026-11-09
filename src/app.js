@@ -79,6 +79,16 @@
     });
   });
 
+  // Rows that open a page when clicked anywhere (schedule rows open the game).
+  // Clicks on links inside the row, or while selecting text, are left alone.
+  document.querySelectorAll('tr[data-href]').forEach((tr) => {
+    tr.addEventListener('click', (e) => {
+      if (e.target.closest('a, button, input, select') || String(window.getSelection())) return;
+      if (e.ctrlKey || e.metaKey || e.shiftKey) window.open(tr.dataset.href, '_blank');
+      else location.href = tr.dataset.href;
+    });
+  });
+
   // Filters: team select, name search, upcoming-only checkbox.
   const team = document.querySelector('[data-filter="team"]');
   const name = document.querySelector('[data-filter="name"]');

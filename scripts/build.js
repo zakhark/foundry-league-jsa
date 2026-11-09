@@ -63,11 +63,21 @@ function teamColor(name) {
 const LOGO_DIR = path.join('src', 'logos');
 const LOGO_EXT = /\.(png|jpe?g|webp|svg)$/i;
 const logoFiles = fs.existsSync(LOGO_DIR) ? fs.readdirSync(LOGO_DIR).filter((f) => LOGO_EXT.test(f)) : [];
+// Teams without a logo get a generated placeholder (see placeholderLogo), so
+// every team has an image of the same shape and rows line up.
+const placeholderLogos = new Set(); // team slugs
 const logoOf = (name) => {
   const f = logoFiles.find((x) => x.replace(LOGO_EXT, '') === slugify(name));
-  return f ? `logos/${f}` : '';
+  if (f) return `logos/${f}`;
+  return placeholderLogos.has(slugify(name)) ? `logos/${slugify(name)}.svg` : '';
 };
-// Small team marker: the logo if there is one, otherwise a coloured dot.
+// A square in the team colour with the team's initials, e.g. "K" for Kodiaks.
+const placeholderLogo = (name) => {
+  const initials = name.split(/s+/).filter(Boolean).map((w) => w[0]).join('').slice(0, 2).toUpperCase();
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96"><rect width="96" height="96" fill="${teamColor(name)}"/><text x="48" y="50" text-anchor="middle" dominant-baseline="central" font-family="system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif" font-weight="800" font-size="${initials.length > 1 ? 38 : 46}" fill="#fff">${esc(initials)}</text></svg>
+`;
+};
+// Small team marker next to a team name.
 const teamMark = (name, r) => {
   const logo = logoOf(name);
   return logo
@@ -294,7 +304,8 @@ function scheduleRows(games, r, perspective) {
     const matchup = perspective
       ? `${g.home === perspective ? 'vs' : '@'} ${teamLink(g.home === perspective ? g.away : g.home, r)}`
       : `${teamLink(g.away, r)} <span class="muted">@</span> ${teamLink(g.home, r)}`;
-    return `<tr data-teams="${teams}"${g.played ? '' : ' class="upcoming"'}>${[
+    // The whole row opens the game (app.js); links inside it, like team names, still go to their own pages.
+    return `<tr data-teams="${teams}" data-href="${r}games/${g.num}.html" class="linked${g.played ? '' : ' upcoming'}">${[
       td(g.num, 'num'), td(dateLabel(g), 'nowrap', g.date ? g.date.toISOString() : ''), td(esc(g.time), 'nowrap'),
       td(place(g), 'nowrap'), td(matchup), td(result + videoLink(g), 'nowrap'),
     ].join('')}</tr>`;
@@ -323,8 +334,13 @@ const SCHEDULE_COLS = [
 fs.rmSync(OUT, { recursive: true, force: true });
 fs.mkdirSync(OUT, { recursive: true });
 for (const f of ['style.css', 'app.js', 'logo.png']) fs.copyFileSync(path.join('src', f), path.join(OUT, f));
+fs.mkdirSync(path.join(OUT, 'logos'), { recursive: true });
+for (const t of D.teams.values()) {
+  if (logoOf(t.name)) continue;
+  fs.writeFileSync(path.join(OUT, 'logos', `${t.slug}.svg`), placeholderLogo(t.name));
+  placeholderLogos.add(t.slug);
+}
 if (logoFiles.length) {
-  fs.mkdirSync(path.join(OUT, 'logos'), { recursive: true });
   for (const f of logoFiles) fs.copyFileSync(path.join(LOGO_DIR, f), path.join(OUT, 'logos', f));
   const known = new Set([...D.teams.values()].map((t) => t.slug));
   for (const f of logoFiles) {
@@ -494,7 +510,7 @@ ${table([{ label: 'Team' }, { label: 'Rank', cls: 'num' }, { label: 'Record' }, 
   const r = '../';
   const cards = D.standings.map((t) => `<a class="card team-card" href="${t.slug}.html" style="--team:${teamColor(t.name)}">
   <span class="rank">${t.rank}</span>
-  ${logoOf(t.name) ? `<img class="card-logo" src="../${logoOf(t.name)}" alt="" width="48" height="48" loading="lazy">` : `<span class="card-logo initials" style="background:${teamColor(t.name)}" aria-hidden="true">${esc(t.name.split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase())}</span>`}
+  ${logoOf(t.name) ? `<img class="card-logo" src="../${logoOf(t.name)}" alt="" width="48" height="48" loading="lazy">` : ''}
   <b>${esc(t.name)}</b>
   <span>${rec(t)} · ${t.pts} pts</span>
   <span class="muted">${t.roster.length} players · GF ${t.gf} · GA ${t.ga}${[t.links.youtube && '▶ YouTube', t.links.instagram && 'Instagram'].filter(Boolean).map((x) => ` · ${x}`).join('')}</span>
