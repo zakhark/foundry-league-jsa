@@ -236,3 +236,22 @@ h2.split a { font-weight: 500; }
 small.rank { color: var(--muted); font-size: .75em; margin-left: 2px; }
 /* Schedule rows open the game page */
 tr.linked { cursor: pointer; }
+/* Calendar and BenchApp links */
+.cal-links { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 12px; }
+.cal-links .yt { margin-top: 0; }
+button.yt { font: inherit; font-weight: 600; font-size: .9rem; cursor: pointer; }
+.cal-help { flex-basis: 100%; font-size: .9rem; }
+.cal-help summary { cursor: pointer; color: var(--accent); width: max-content; }
+.team-files { margin: 0 0 12px; }
+.team-files summary { cursor: pointer; display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; }
+.team-files[open] summary { margin-bottom: 8px; }
+.team-files .table-wrap { margin-top: 8px; }
+.team-files .cal-links { margin: 0; flex-wrap: nowrap; }
+.team-files .yt { padding: 4px 10px; font-size: .85rem; white-space: nowrap; }
+.cal-help-list { margin: 8px 0; padding-left: 20px; }
+.cal-help-list li { margin-bottom: 6px; }
+.team-files summary { list-style: none; }
+.team-files summary::-webkit-details-marker { display: none; }
+.team-files summary b::before { content: "▸"; display: inline-block; width: 1em; font-size: 1.25em; line-height: 1; color: var(--accent); transition: transform .15s; }
+.team-files[open] summary b::before { transform: rotate(90deg); }
+@media (max-width: 720px) { .team-files .cal-links { flex-wrap: wrap; } }

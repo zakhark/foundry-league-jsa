@@ -89,6 +89,26 @@
     });
   });
 
+  // Calendar links: "Copy link" copies the full https address; on Apple
+  // devices "Subscribe" uses webcal:// so Calendar subscribes instead of
+  // importing a one-time copy.
+  if (/iPhone|iPad|Macintosh/.test(navigator.userAgent)) {
+    document.querySelectorAll('[data-subscribe]').forEach((a) => { a.href = a.href.replace(/^https?:/, 'webcal:'); });
+  }
+  document.querySelectorAll('[data-copy]').forEach((copy) => {
+    copy.addEventListener('click', async () => {
+      const url = new URL(copy.dataset.copy, location.href).href;
+      try {
+        await navigator.clipboard.writeText(url);
+        const label = copy.textContent;
+        copy.textContent = 'Copied!';
+        setTimeout(() => { copy.textContent = label; }, 1500);
+      } catch {
+        window.prompt('Copy this calendar link:', url);
+      }
+    });
+  });
+
   // Filters: team select, name search, upcoming-only checkbox.
   const team = document.querySelector('[data-filter="team"]');
   const name = document.querySelector('[data-filter="name"]');
