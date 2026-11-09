@@ -64,7 +64,7 @@ The `builder` container re-downloads the sheet and rebuilds every 15 minutes (`R
 
 ## Also publishing to Cloudflare Pages (optional)
 
-The same workflow can upload each build to Cloudflare Pages too, so both sites always match. It's skipped until the Cloudflare secrets exist.
+The same workflow can upload each build to Cloudflare Pages too, so both sites always match. The upload runs as its own `deploy-cloudflare` job, next to the GitHub Pages `deploy` job, so if one host has a problem the other still updates. The job is skipped until the Cloudflare secrets exist.
 
 1. Create the Pages project once. With Node installed, run `npx wrangler login`, then `npx wrangler pages project create foundry-league-jsa --production-branch main`. The site will be at `https://foundry-league-jsa.pages.dev` (or the name Cloudflare reports if that one is taken). To use a different project name, also set a repository **variable** `CLOUDFLARE_PROJECT` to that name.
 2. Create an API token: Cloudflare dashboard → **My Profile → API Tokens → Create Token → Create Custom Token**, with one permission, **Account → Cloudflare Pages → Edit**.
@@ -74,7 +74,7 @@ The same workflow can upload each build to Cloudflare Pages too, so both sites a
    gh secret set CLOUDFLARE_API_TOKEN
    gh secret set CLOUDFLARE_ACCOUNT_ID
    ```
-5. Run the workflow (**Actions → Build and deploy → Run workflow**). The "Deploy to Cloudflare Pages" step publishes the site.
+5. Run the workflow (**Actions → Build and deploy → Run workflow**). The `deploy-cloudflare` job publishes the site.
 
 Other static hosts, such as Netlify, can also build the site themselves: build command `npm run all`, output directory `dist`, plus the `SHEET_ID` environment variable.
 
