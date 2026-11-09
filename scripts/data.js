@@ -466,6 +466,18 @@ function build(d) {
     .filter((t) => t.roster.length || t.gp)
     .sort((a, b) => b.pts - a.pts || b.pct - a.pct || b.w - a.w || b.diff - a.diff || b.gf - a.gf || a.name.localeCompare(b.name));
   standings.forEach((t, i) => { t.rank = i + 1; });
+  // Per-game rates, since teams have played different numbers of games, and
+  // league ranks by them: offense by GF/G (higher is better), defense by GA/G
+  // (lower is better). Tied teams share a rank. Teams without games get none.
+  for (const t of standings) {
+    t.gfpg = t.gp ? t.gf / t.gp : null;
+    t.gapg = t.gp ? t.ga / t.gp : null;
+  }
+  const active = standings.filter((t) => t.gp);
+  for (const t of active) {
+    t.offRank = 1 + active.filter((o) => o.gfpg > t.gfpg).length;
+    t.defRank = 1 + active.filter((o) => o.gapg < t.gapg).length;
+  }
 
   // Players: rostered players plus anyone appearing in events or the sub list.
   const players = new Map();
@@ -474,7 +486,7 @@ function build(d) {
     if (!players.has(key)) {
       players.set(key, {
         name, slug: slugify(name), team: '', teams: [], number: '', position: '', captain: '',
-        goals: 0, soGoals: 0, pim: 0, penalties: 0, subGames: 0,
+        goals: 0, soGoals: 0, pim: 0, penalties: 0, subGames: 0, teamGoals: 0, teamGoalPct: null,
         log: new Map(), // game num -> { team, goals, soGoals, pim, penalties: [] }
       });
     }
@@ -513,6 +525,18 @@ function build(d) {
   for (const p of players.values()) {
     p.subGoals = 0;
     for (const [, e] of p.log) if (p.team && !p.teams.includes(e.team)) p.subGoals += e.goals;
+  }
+  // Share of their team's goals: regular-season goals for their (first) roster
+  // team, divided by that team's GF. Like GF, playoff games don't count.
+  const gameByNum = new Map(d.games.map((g) => [g.num, g]));
+  for (const p of players.values()) {
+    p.teamGoals = 0;
+    for (const [num, e] of p.log) {
+      const g = gameByNum.get(num);
+      if (p.team && e.team === p.team && g && !g.playoff) p.teamGoals += e.goals;
+    }
+    const t = p.team && teams.get(p.team);
+    p.teamGoalPct = t && t.gf ? p.teamGoals / t.gf : null;
   }
 
   // Goalies: from starting goalies in the schedule.

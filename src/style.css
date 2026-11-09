@@ -196,7 +196,6 @@ section[id] { scroll-margin-top: calc(var(--header-h) + 64px); }
 .team-logo { width: 96px; height: 96px; border-radius: 14px; object-fit: cover; background: #fff; box-shadow: 0 0 0 1px var(--line), 0 2px 8px rgba(0,0,0,.08); flex: none; }
 .card-logo { width: 48px; height: 48px; border-radius: 8px; object-fit: cover; background: #fff; box-shadow: 0 0 0 1px var(--line); margin-bottom: 4px; }
 @media (max-width: 520px) { .team-logo { width: 72px; height: 72px; } .team-head.has-logo { gap: 12px; } }
-.card-logo.initials { display: grid; place-items: center; color: #fff; font-weight: 800; font-size: 1.05rem; letter-spacing: .02em; box-shadow: none; }
 /* Videos */
 h2.split { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
 h2.split a { font-weight: 500; }
@@ -219,3 +218,21 @@ h2.split a { font-weight: 500; }
 .social + .toolbar { margin-top: 16px; }
 .yt.gc { color: var(--accent); }
 .yt.gc:hover { border-color: var(--accent); }
+/* Game video player */
+.player { max-width: 860px; margin: 14px auto 6px; }
+.player .frame { position: relative; aspect-ratio: 16 / 9; background: #000; border-radius: var(--radius); overflow: hidden; }
+.player .frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.player .facade { position: absolute; inset: 0; display: block; }
+.player .facade img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.player .play { position: absolute; inset: 0; display: grid; place-items: center; transition: transform .15s; }
+.player .play svg { width: 72px; height: 72px; filter: drop-shadow(0 2px 8px rgba(0,0,0,.5)); }
+.player .facade:hover .play { transform: scale(1.08); }
+.angles { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; font-size: .9rem; }
+.angle { padding: 4px 12px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); color: var(--text); font-weight: 600; }
+.angle:hover { border-color: #ff0000; text-decoration: none; }
+.angle[aria-pressed="true"] { background: var(--text); color: var(--bg); border-color: var(--text); }
+.angles .open { margin-left: auto; }
+/* League rank next to a per-game rate */
+small.rank { color: var(--muted); font-size: .75em; margin-left: 2px; }
+/* Schedule rows open the game page */
+tr.linked { cursor: pointer; }
