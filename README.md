@@ -43,14 +43,14 @@ The sheet's ID (the long part of its URL) is **not** in the code. Anyone who has
 npm install
 cp .env.example .env   # then put the sheet ID in .env
 npm run all            # fetch + build
-npm run serve          # http://localhost:8080
+npm run serve          # http://localhost:3000 (or the next free port; it prints the address)
 ```
 
 ## Run it in a container
 
 ```sh
 cp .env.example .env           # then put the sheet ID in .env
-docker compose up -d --build   # http://localhost:8080
+docker compose up -d --build   # http://localhost:3000
 ```
 
 The `builder` container re-downloads the sheet and rebuilds every 15 minutes (`REFRESH_SECONDS`), and `nginx` serves the result.

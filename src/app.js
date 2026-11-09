@@ -109,38 +109,43 @@
     });
   });
 
-  // Filters: team select, name search, upcoming-only checkbox.
+  // Filters: team select, name search, and "Show" (all games / results / upcoming).
+  // The team and show choices are kept in the URL (?team=reapers&show=results),
+  // so filtered views can be linked to.
   const team = document.querySelector('[data-filter="team"]');
   const name = document.querySelector('[data-filter="name"]');
-  const upcoming = document.querySelector('[data-filter="upcoming"]');
-  if (!team && !name && !upcoming) return;
+  const which = document.querySelector('[data-filter="show"]');
+  if (!team && !name && !which) return;
 
   const params = new URLSearchParams(location.search);
   if (team && params.get('team')) team.value = params.get('team');
+  if (which && ['results', 'upcoming'].includes(params.get('show'))) which.value = params.get('show');
 
   const apply = () => {
     const t = team ? team.value : '';
     const q = name ? name.value.trim().toLowerCase() : '';
-    const u = upcoming ? upcoming.checked : false;
+    const w = which ? which.value : '';
     document.querySelectorAll('tbody tr, .video-card').forEach((tr) => {
       if (tr.dataset.teams === undefined && tr.dataset.name === undefined) return;
       const show =
         (!t || (tr.dataset.teams || '').split(' ').includes(t)) &&
         (!q || (tr.dataset.name || '').includes(q)) &&
-        (!u || tr.classList.contains('upcoming'));
+        (!w || (w === 'upcoming') === tr.classList.contains('upcoming'));
       tr.hidden = !show;
     });
     // Hide schedule weeks with no visible games.
     document.querySelectorAll('[data-week]').forEach((sec) => {
       sec.hidden = !sec.querySelector('tbody tr:not([hidden])');
     });
-    if (team) {
+    if (team || which) {
       const url = new URL(location.href);
-      if (t) url.searchParams.set('team', t);
-      else url.searchParams.delete('team');
+      for (const [key, value] of [['team', t], ['show', w]]) {
+        if (value) url.searchParams.set(key, value);
+        else url.searchParams.delete(key);
+      }
       history.replaceState(null, '', url);
     }
   };
-  [team, name, upcoming].forEach((el) => el && el.addEventListener(el.tagName === 'SELECT' || el.type === 'checkbox' ? 'change' : 'input', apply));
+  [team, name, which].forEach((el) => el && el.addEventListener(el.tagName === 'SELECT' ? 'change' : 'input', apply));
   apply();
 })();
