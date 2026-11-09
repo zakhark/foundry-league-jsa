@@ -81,6 +81,7 @@ Other static hosts, such as Netlify, can also build the site themselves: build c
 ## Customising
 
 - League name, points per win/OTL, etc.: `scripts/config.js`. The league name can also be set with the `LEAGUE_NAME` environment variable.
+- Team names: `teamRenames` in `scripts/config.js` shows a team under a different name than the sheet uses (currently "Sk8 Balls" → "Sk8Balls"). It applies everywhere: pages, team page URLs (`teams/sk8balls.html`), logos (`src/logos/sk8balls.png`), calendars, BenchApp files and the sheet's comments. `team-links.json` and the `seasons/` files can use either spelling.
 - Look and feel: `src/style.css`. Team colours are picked from words in team names (`COLOR_WORDS` in `scripts/build.js`).
 - Team YouTube and Instagram links: fill in `team-links.json`, or add a **Team Links** tab to the spreadsheet with columns `Team`, `YouTube` and `Instagram` (the tab overrides the file). Buttons for them appear on that team's page. Only `https://youtube.com/...`, `https://youtu.be/...` and `https://instagram.com/<handle>` links are accepted.
 - Team logos: put an image named after the team in `src/logos/`, e.g. `reapers.jpg` or `kraken-cold-ones.png` (PNG, JPG, WebP or SVG; square works best). Use the team's page name from its URL: `teams/kraken-cold-ones.html` → `kraken-cold-ones`. The logo appears on the team page, on the Teams list and next to the team name across the site. Teams without a logo get a generated placeholder with their initials in the team colour.
@@ -93,7 +94,7 @@ Other static hosts, such as Netlify, can also build the site themselves: build c
     - `timeZone`: the sheet's times are local times there.
     - `gameMinutes`: how long each event lasts.
     - `arenas`: full names and street addresses for the sheet's arena codes (the event location; the rink goes in the notes).
-    - `benchAppNames`: team names to use in the BenchApp files and calendars when BenchApp spells them differently from the sheet, e.g. `"Sk8 Balls": "Sk8Balls"`. BenchApp matches teams by exact name.
+    - `benchAppNames`: team names to use in the BenchApp files and calendars when BenchApp spells them differently from the sheet. BenchApp matches teams by exact name. Empty by default; for a name change everywhere, use `teamRenames` instead.
     - `siteUrl`: used for links inside events; it can also be set with `SITE_URL`.
 
 ## Seasons

@@ -24,6 +24,17 @@ const SHEETS = {
   rosters: /^S(\d+) Rosters$/,
 };
 
+// "Sk8 Balls" -> "Sk8Balls" (config.teamRenames), matched case-insensitively.
+const RENAMES = new Map(Object.entries(config.teamRenames || {}).map(([from, to]) => [from.toLowerCase(), to]));
+const renameTeam = (name) => (name && RENAMES.get(String(name).toLowerCase())) || name;
+// The same renames inside free text from the sheet, e.g. schedule comments.
+const escRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const renameInText = (text) => {
+  let t = text;
+  for (const [from, to] of RENAMES) t = t && t.replace(new RegExp(`\\b${escRe(from)}\\b`, 'gi'), to);
+  return t;
+};
+
 const warnings = [];
 const warn = (msg) => warnings.push(msg);
 
@@ -87,6 +98,7 @@ function parseWorkbook(file) {
   const teamNames = new Map(); // lowercase -> canonical
   const canonTeam = (name) => {
     if (!name) return '';
+    name = renameTeam(name);
     const key = name.toLowerCase();
     if (!teamNames.has(key)) teamNames.set(key, name);
     return teamNames.get(key);
@@ -171,7 +183,7 @@ function parseWorkbook(file) {
       time: r[sc('Time')],
       arena: r[sc('Arena')],
       rink: r[sc('Rink')],
-      comment: r[sc('Comments')],
+      comment: renameInText(r[sc('Comments')]),
       playoff: playoffs,
     };
     if (!home || !away) {
@@ -257,12 +269,12 @@ function parseWorkbook(file) {
   const scheduleUpdates = [];
   const slot = (r, o) => ({
     num: r[o], week: r[o + 1], date: r[o + 2], day: r[o + 3], time: r[o + 4],
-    arena: r[o + 5], rink: r[o + 6], home: r[o + 7], away: r[o + 8],
+    arena: r[o + 5], rink: r[o + 6], home: renameTeam(r[o + 7]), away: renameTeam(r[o + 8]),
   });
   for (const r of U.slice(1)) {
     if (!int(r[0])) continue;
     scheduleUpdates.push({
-      from: slot(r, 0), to: slot(r, 10), reason: r[20], changed: r[21], comments: r[22],
+      from: slot(r, 0), to: slot(r, 10), reason: renameInText(r[20]), changed: r[21], comments: renameInText(r[22]),
     });
   }
 
@@ -302,7 +314,11 @@ function assemble(raw) {
   for (const n of [...roster.map((r) => r.team), ...games.flatMap((g) => [g.home, g.away])]) {
     if (n && !teamNames.has(n.toLowerCase())) teamNames.set(n.toLowerCase(), n);
   }
-  const canonTeam = (name) => (name ? teamNames.get(name.toLowerCase()) || name : '');
+  const canonTeam = (name) => {
+    if (!name) return '';
+    const n = renameTeam(name);
+    return teamNames.get(n.toLowerCase()) || n;
+  };
   const VIDEOS_FILE = path.join(seasonDir(season), 'game-videos.json');
   const GAME_CENTER_FILE = path.join(seasonDir(season), 'game-center.json');
 

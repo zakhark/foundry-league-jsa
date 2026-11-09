@@ -1,6 +1,6 @@
 {
   "_comment": "Team links. Use the exact team name; leave a field blank if the team has none. A 'Team Links' tab in the spreadsheet (columns: Team, YouTube, Instagram) overrides this file.",
-  "Sk8 Balls": {
+  "Sk8Balls": {
     "youtube": "https://www.youtube.com/@Sk8ballsHockey-yn9nf",
     "instagram": ""
   },

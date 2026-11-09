@@ -29,6 +29,14 @@ module.exports = {
   // Standings points.
   points: { win: 2, otLoss: 1, tie: 1 },
 
+  // Team names to show instead of the sheet's spelling, everywhere on the site
+  // and in the calendar and BenchApp files. Applied when the sheet is read; the
+  // old spelling also keeps working as a key in team-links.json and the
+  // seasons/ files.
+  teamRenames: {
+    'Sk8 Balls': 'Sk8Balls',
+  },
+
   // Number of upcoming games shown on the home page.
   upcomingCount: 8,
 
@@ -46,9 +54,7 @@ module.exports = {
   // Team names to use in BenchApp files and calendars when they differ from
   // the sheet. BenchApp matches teams by exact name, so these must be spelled
   // exactly as the teams are named in BenchApp.
-  benchAppNames: {
-    'Sk8 Balls': 'Sk8Balls',
-  },
+  benchAppNames: {},
   // The public site address, used for links inside calendar events.
   siteUrl: process.env.SITE_URL || 'https://zakhark.github.io/foundry-league-jsa/',
 };
