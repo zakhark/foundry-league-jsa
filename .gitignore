@@ -6,6 +6,8 @@ dist-archive/
 # Downloaded spreadsheet: it contains every tab, including private ones
 data/*.xlsx
 data/*.csv
+# Scores fetched from the rink at build time (npm run rink-scores)
+data/rink-scores.json
 # Local secrets and settings
 .env
 .env.*

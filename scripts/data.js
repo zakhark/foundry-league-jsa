@@ -207,15 +207,7 @@ function parseWorkbook(file) {
       homeGoalie: canonPlayer(r[sc('Starting Goalie (Home)')], home),
       awayGoalie: canonPlayer(r[sc('Starting Goalie (Away)')], away),
     };
-    if (played) {
-      if (g.tie || hs === as) {
-        g.tie = true;
-        g.winner = g.loser = '';
-      } else {
-        g.winner = hs > as ? home : away;
-        g.loser = hs > as ? away : home;
-      }
-    }
+    if (played) setResult(g);
     games.push(g);
   }
   games.sort((a, b) => a.num - b.num);
@@ -299,6 +291,46 @@ function parseWorkbook(file) {
   }
 
   return { season: String(season), roster, games, scheduleNotes, events, subs, scheduleUpdates, sheetLinks };
+}
+
+// Winner and loser of a played game (a tie if the scores are level).
+function setResult(g) {
+  if (g.tie || g.homeScore === g.awayScore) {
+    g.tie = true;
+    g.winner = g.loser = '';
+  } else {
+    g.winner = g.homeScore > g.awayScore ? g.home : g.away;
+    g.loser = g.homeScore > g.awayScore ? g.away : g.home;
+  }
+}
+
+// Scores from the rink's game center (see scripts/rink-scores.js) for games
+// the sheet has no score for yet. A final score is used as the result
+// (g.fromRink = 'final'); a live one is only shown (g.fromRink = 'live'). Anything
+// the sheet already has a score for is left alone, as is an old file.
+function applyRinkScores(raw) {
+  const file = config.rinkScores.file;
+  if (!fs.existsSync(file)) return;
+  const json = JSON.parse(fs.readFileSync(file, 'utf8'));
+  const age = Date.now() - Date.parse(json.fetchedAt);
+  if (String(json.season) !== String(raw.season) || !(age < config.rinkScores.hours * 3600 * 1000)) return;
+  const byNum = new Map(raw.games.map((g) => [g.num, g]));
+  for (const [num, r] of Object.entries(json.games || {})) {
+    const g = byNum.get(Number(num));
+    if (!g || g.played || g.tbd || !Number.isInteger(r.homeScore) || !Number.isInteger(r.awayScore)) continue;
+    g.fromRink = r.status === 'final' ? 'final' : 'live';
+    const n = (v) => (Number.isInteger(v) && v >= 0 ? v : 0);
+    g.rinkPeriods = Array.isArray(r.periods) && r.periods.every((p) => /^(1|2|3|OT|SO)$/.test(p.period))
+      ? r.periods.map((p) => ({ period: p.period, away: n(p.away), home: n(p.home) }))
+      : null;
+    if (g.fromRink === 'live') {
+      g.live = { homeScore: r.homeScore, awayScore: r.awayScore };
+      continue;
+    }
+    Object.assign(g, { homeScore: r.homeScore, awayScore: r.awayScore, played: true, ot: !!r.ot, so: !!r.so, tie: false });
+    setResult(g);
+    warn(`Game #${g.num}: no score in the sheet yet; using the rink's final score ${g.away} ${g.awayScore}, ${g.home} ${g.homeScore}${g.so ? ' (SO)' : g.ot ? ' (OT)' : ''}`);
+  }
 }
 
 // Where a season's own files live: game videos, rink game center links and,
@@ -394,8 +426,11 @@ function assemble(raw) {
 }
 
 // Live season: read the workbook.
-function load(file) {
-  return assemble(parseWorkbook(file));
+// { rink: false } reads the sheet alone, without scores from the rink.
+function load(file, { rink = true } = {}) {
+  const raw = parseWorkbook(file);
+  if (rink) applyRinkScores(raw);
+  return assemble(raw);
 }
 
 // ---------- Season archives ----------
@@ -429,7 +464,7 @@ function build(d) {
     if (!teams.has(name)) {
       teams.set(name, {
         name, slug: slugify(name),
-        gp: 0, w: 0, l: 0, otl: 0, t: 0, pts: 0, gf: 0, ga: 0, pim: 0,
+        gp: 0, w: 0, l: 0, otl: 0, t: 0, pts: 0, gf: 0, ga: 0, pim: 0, rinkGf: 0,
         results: [], // 'W' | 'L' | 'OTL' | 'T' in game order
         h2h: new Map(),
         roster: [], goalies: [],
@@ -455,6 +490,7 @@ function build(d) {
     if (!g.played || g.playoff) continue;
     for (const side of ['home', 'away']) {
       const t = team(g[side]);
+      if (g.fromRink) t.rinkGf += realGoals(g, side); // goals with no scorer details yet
       const opp = side === 'home' ? g.away : g.home;
       const gf = realGoals(g, side);
       const ga = realGoals(g, other(side));
@@ -552,7 +588,8 @@ function build(d) {
       if (p.team && e.team === p.team && g && !g.playoff) p.teamGoals += e.goals;
     }
     const t = p.team && teams.get(p.team);
-    p.teamGoalPct = t && t.gf ? p.teamGoals / t.gf : null;
+    // Rink-only scores have no scorers yet, so leave those games out.
+    p.teamGoalPct = t && t.gf - t.rinkGf ? p.teamGoals / (t.gf - t.rinkGf) : null;
   }
 
   // Goalies: from starting goalies in the schedule.
@@ -561,7 +598,7 @@ function build(d) {
   const isRosterGoalie = (name, teamName) =>
     d.roster.some((r) => r.team === teamName && r.name.toLowerCase() === name.toLowerCase());
   for (const g of d.games) {
-    if (!g.played || g.playoff) continue;
+    if (!g.played || g.playoff || g.fromRink) continue; // rink scores come without goalies
     for (const side of ['home', 'away']) {
       const name = g[`${side}Goalie`];
       if (!name) { warn(`Game #${g.num}: no ${side} goalie recorded`); continue; }
@@ -596,7 +633,7 @@ function build(d) {
       const goals = (t) => g.events.filter((e) => e.team === t && e.type === 'Goal').reduce((n, e) => n + e.qty, 0);
       g.homeGoals = realGoals(g, 'home');
       g.awayGoals = realGoals(g, 'away');
-      if (goals(g.home) !== g.homeGoals || goals(g.away) !== g.awayGoals) {
+      if (!g.fromRink && (goals(g.home) !== g.homeGoals || goals(g.away) !== g.awayGoals)) {
         warn(`Game #${g.num}: score ${g.homeGoals}-${g.awayGoals} (excl. shootout) but goal events add up to ${goals(g.home)}-${goals(g.away)}`);
       }
     }

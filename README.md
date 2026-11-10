@@ -42,7 +42,7 @@ The sheet's ID (the long part of its URL) is **not** in the code. Anyone who has
 ```sh
 npm install
 cp .env.example .env   # then put the sheet ID in .env
-npm run all            # fetch + build
+npm run all            # fetch + rink scores + build
 npm run serve          # http://localhost:3000 (or the next free port; it prints the address)
 ```
 
@@ -60,7 +60,7 @@ The `builder` container re-downloads the sheet and rebuilds every 15 minutes (`R
 1. Push this folder to a GitHub repository (the `main` branch).
 2. Add the `SHEET_ID` repository secret (see above).
 3. In the repo, go to **Settings → Pages → Source** and pick **GitHub Actions**.
-4. The workflow in `.github/workflows/deploy.yml` builds and publishes the site on every push and on game nights and the day after: 9, 10 and 11 PM on Fri/Sun/Mon, then 2 AM, 10 AM, 2 PM, 4 PM, 6 PM and 8 PM the next day (Eastern Standard Time; one hour later during daylight saving). It also runs when you click **Actions → Build and deploy → Run workflow** after entering scores.
+4. The workflow in `.github/workflows/deploy.yml` builds and publishes the site on every push and on game nights and the day after: 9, 10 and 11 PM on Fri/Sun/Mon, then 2 AM, 10 AM, 2 PM, 4 PM, 6 PM and 8 PM the next day (Eastern Standard Time; one hour later during daylight saving). It also runs when you click **Actions → Build and deploy → Run workflow** after entering scores. To test a branch without publishing it, pick the branch there and untick **Publish the site** (or `gh workflow run deploy.yml --ref <branch> -f deploy=false`); the built site is attached to the run as an artifact.
 
 ## Also publishing to Cloudflare Pages (optional)
 
@@ -87,6 +87,7 @@ Other static hosts, such as Netlify, can also build the site themselves: build c
 - Team logos: put an image named after the team in `src/logos/`, e.g. `reapers.jpg` or `kraken-cold-ones.png` (PNG, JPG, WebP or SVG; square works best). Use the team's page name from its URL: `teams/kraken-cold-ones.html` → `kraken-cold-ones`. The logo appears on the team page, on the Teams list and next to the team name across the site. Teams without a logo get a generated placeholder with their initials in the team colour.
 - Game videos: `npm run videos` scans the channels in `team-links.json` and saves matches to `seasons/<season>/game-videos.json`. It matches videos by the date and opponent in the title, e.g. "Reapers vs Whalers October 19 2026". The scheduled GitHub build and the container run this automatically. Entries you add or fix by hand in that file are kept. Each game with a video gets a "Watch" button on its game page and a ▶ icon in the schedules.
 - Rink game center links: `npm run game-center` opens the rink's TimeToScore schedule page in a local Chrome or Edge, matches its games to ours by date and teams, and saves the IDs in `seasons/<season>/game-center.json`. Run it once per season, or when the rink adds games; the build itself never contacts the rink's site. Game pages then link to the rink's game center and official scoresheet PDF, and team pages to the rink's team page. The rink's schedule page may not list every game, especially early in the season. For those, pass the rink's game IDs from their game-center links: `npm run game-center -- --games 86188,88259-88270`. If no browser is found, save the rendered schedule page and pass it: `npm run game-center -- page.html`. When a new season starts, run `npm run game-center -- --new-season "<the rink's schedule URL for the new season>"`.
+- Scores from the rink before the sheet has them: `npm run rink-scores` looks at games that started in the last 36 hours (`rinkScores.hours` in `scripts/config.js`) and still have no score in the sheet. It opens their rink game-center pages in a local Chrome or Edge and saves what it finds to `data/rink-scores.json`, which isn't committed. A game the rink marks Final (or Final/OT, Final/SO) is shown as the result with a small "rink" tag and counts in the standings; its scorers and penalties appear once the sheet is updated. A game still marked Live shows its score as "Live", or "Unofficial" after it should have ended, but isn't counted. As soon as the sheet has a score, the sheet's score is used. The scheduled GitHub build runs this before building; `npm run all` does too. It's best effort: with no browser, or if the rink's site is down, the site builds without it. The container doesn't run it, because its image has no browser.
 - Team calendars and BenchApp files: every build writes `calendar/<team>.ics` and `benchapp/<team>.csv`. Team pages link to their own files, and the Schedule page has a collapsed "BenchApp import & team calendars" section with every team's files. Both include short instructions.
   - The `.ics` files are calendar feeds people can subscribe to, in phone and computer calendars or BenchApp's calendar sync. Each game keeps the same event ID, so moved games update instead of duplicating.
   - The `.csv` files follow BenchApp's "Import Events" template (dates as DD/MM/YYYY).

@@ -51,7 +51,7 @@ function renderPage(url) {
     return execFileSync(browser, [
       '--headless=new', '--disable-gpu', '--virtual-time-budget=20000',
       `--user-data-dir=${profile}`, '--dump-dom', url,
-    ], { encoding: 'utf8', maxBuffer: 50 * 1024 * 1024, stdio: ['ignore', 'pipe', 'ignore'] });
+    ], { encoding: 'utf8', maxBuffer: 50 * 1024 * 1024, stdio: ['ignore', 'pipe', 'ignore'], timeout: 90000 });
   } finally {
     fs.rmSync(profile, { recursive: true, force: true });
   }
@@ -177,9 +177,14 @@ function main() {
   if (missing.length) console.log(`Not on the rink's schedule (${missing.length}):\n  ${missing.join('\n  ')}`);
 }
 
-try {
-  main();
-} catch (e) {
-  console.error(e.message);
-  process.exit(1);
+// Also used by rink-scores.js.
+module.exports = { findBrowser, renderPage, norm, MONTHS };
+
+if (require.main === module) {
+  try {
+    main();
+  } catch (e) {
+    console.error(e.message);
+    process.exit(1);
+  }
 }

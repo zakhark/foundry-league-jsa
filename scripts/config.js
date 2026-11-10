@@ -56,6 +56,11 @@ module.exports = {
   // the sheet. BenchApp matches teams by exact name, so these must be spelled
   // exactly as the teams are named in BenchApp.
   benchAppNames: {},
+  // Scores from the rink's game center for games the sheet has no score for
+  // yet (npm run rink-scores). Only games that started within the last 'hours'
+  // hours are looked up, i.e. the game night and the day after. The build
+  // ignores a file older than that.
+  rinkScores: { file: 'data/rink-scores.json', hours: 36 },
   // The public site address, used for links inside calendar events.
   siteUrl: process.env.SITE_URL || 'https://zakhark.github.io/foundry-league-jsa/',
 };
