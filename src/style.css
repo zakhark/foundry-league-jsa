@@ -119,6 +119,10 @@ a.card:hover { text-decoration: none; border-color: var(--accent); }
 .game-card .line { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; min-height: calc(1.1rem * 1.5 + 8px); } /* room for a score (.score), so result and upcoming cards are the same height */
 .game-card .line.won { font-weight: 700; }
 .game-card .final { font-weight: 600; color: var(--text); }
+/* Scores from the rink's game center that the sheet doesn't have yet */
+.rink-tag { font-size: .7rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; vertical-align: 1px; cursor: help; }
+.live { font-weight: 600; color: #c0392b; cursor: help; }
+small.live { font-size: .75rem; text-transform: uppercase; letter-spacing: .04em; }
 .score { font-size: 1.1rem; }
 .team-grid { grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
 .team-card { border-left: 6px solid var(--team); display: grid; gap: 2px; position: relative; }

@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const config = require('./config');
 const { load, loadArchive, archiveFile, slugify } = require('./data');
+const { startOf } = require('./calendar');
 
 const argv = process.argv.slice(2);
 const opt = (name) => { const i = argv.indexOf(name); return i >= 0 ? argv[i + 1] : undefined; };
@@ -163,6 +164,18 @@ function videoPlayer(g) {
 </div>`;
 }
 
+// Scores from the rink's game center (scripts/rink-scores.js) for games the
+// sheet has no score for yet: a final one is used as the result and marked
+// "rink"; a live one is shown but not counted. A live game long past its end
+// is one the scorekeeper hasn't closed yet, so it's "Unofficial".
+const RINK_TIP = "Score from the rink's game center; the league sheet hasn't been updated yet";
+function liveLabel(g) {
+  const start = startOf(g);
+  return start && Date.now() < start.getTime() + (config.gameMinutes + 30) * 60000 ? 'Live' : 'Unofficial';
+}
+const shown = (g) => (g.played ? g : g.live || null); // the scores to show, if any
+const rinkTag = (g) => (g.fromRink === 'final' ? ` <small class="rink-tag" title="${RINK_TIP}">rink</small>` : '');
+
 function scoreText(g) {
   if (!g.played) return '';
   const suffix = g.so ? ' SO' : g.ot ? ' OT' : '';
@@ -273,11 +286,12 @@ function standingsTable(r, compact = false) {
 
 function gameCard(g, r) {
   const status = g.played
-    ? `<span class="final">Final${g.so ? ' / SO' : g.ot ? ' / OT' : ''}</span>`
+    ? `<span class="final">Final${g.so ? ' / SO' : g.ot ? ' / OT' : ''}${rinkTag(g)}</span>`
+    : g.live ? `<span class="live" title="${RINK_TIP}">${liveLabel(g)}</span>`
     : `<span>${esc(g.time) || 'TBD'}</span>`;
   const line = (side) => {
     const won = g.played && g.winner === g[side];
-    const score = g.played ? `<b class="score">${g[`${side}Score`]}</b>` : '';
+    const score = shown(g) ? `<b class="score">${shown(g)[`${side}Score`]}</b>` : '';
     const name = g[side]
       ? `<span class="team">${teamMark(g[side], r)}${esc(g[side])}</span>`
       : '<span class="muted">TBD</span>';
@@ -294,12 +308,14 @@ function gameCard(g, r) {
 function scheduleRows(games, r, perspective) {
   return games.map((g) => {
     const teams = [g.home, g.away].filter(Boolean).map((n) => (teamOf(n) ? teamOf(n).slug : slugify(n))).join(' ');
-    let result = g.played ? gameLink(g, r, scoreText(g)) : gameLink(g, r, 'Preview');
+    let result = g.played ? gameLink(g, r, scoreText(g)) + rinkTag(g)
+      : g.live ? `${gameLink(g, r, `${g.live.awayScore}–${g.live.homeScore}`)} <small class="live" title="${RINK_TIP}">${liveLabel(g).toLowerCase()}</small>`
+      : gameLink(g, r, 'Preview');
     if (perspective && g.played) {
       const res = g.tie ? 'T' : g.winner === perspective ? 'W' : g.ot ? 'OTL' : 'L';
       const us = g.home === perspective ? g.homeScore : g.awayScore;
       const them = g.home === perspective ? g.awayScore : g.homeScore;
-      result = `<i class="badge r-${res.toLowerCase()}">${res}</i> ${gameLink(g, r, `${us}–${them}${g.so ? ' SO' : g.ot ? ' OT' : ''}`)}`;
+      result = `<i class="badge r-${res.toLowerCase()}">${res}</i> ${gameLink(g, r, `${us}–${them}${g.so ? ' SO' : g.ot ? ' OT' : ''}`)}${rinkTag(g)}`;
     }
     const matchup = perspective
       ? `${g.home === perspective ? 'vs' : '@'} ${teamLink(g.home === perspective ? g.away : g.home, r)}`
@@ -455,19 +471,27 @@ for (const g of D.games) {
   let body = `<p class="crumbs"><a href="${r}schedule.html">Schedule</a> › Game ${g.num}</p>
 <div class="scoreboard">
   <div class="side${g.played && g.winner === g.away ? ' won' : ''}">${teamLink(g.away, r, { bold: true })}<small>Away${teamOf(g.away) ? ` · ${rec(teamOf(g.away))}` : ''}</small></div>
-  <div class="center">${g.played ? `<div class="big">${g.awayScore}<span>–</span>${g.homeScore}</div><div>Final${g.so ? ' (SO)' : g.ot ? ' (OT)' : ''}</div>` : `<div class="big vs">vs</div><div>${esc(g.time) || 'TBD'}</div>`}</div>
+  <div class="center">${shown(g) ? `<div class="big">${shown(g).awayScore}<span>–</span>${shown(g).homeScore}</div><div>${g.played ? `Final${g.so ? ' (SO)' : g.ot ? ' (OT)' : ''}` : liveLabel(g)}</div>` : `<div class="big vs">vs</div><div>${esc(g.time) || 'TBD'}</div>`}</div>
   <div class="side${g.played && g.winner === g.home ? ' won' : ''}">${teamLink(g.home, r, { bold: true })}<small>Home${teamOf(g.home) ? ` · ${rec(teamOf(g.home))}` : ''}</small></div>
 </div>
 <p class="center-text muted">${dateLabel(g)} · ${esc(g.time)} · ${place(g)} · Week ${g.week ?? '–'}${g.playoff ? ' · Playoffs' : ''}</p>
-${g.comment ? `<p class="note">${esc(g.comment)}</p>` : ''}
+${g.comment ? `<p class="note">${esc(g.comment)}</p>` : ''}${g.fromRink ? `<p class="note rink-note">${g.fromRink === 'final' ? 'Final score' : liveLabel(g) === 'Live' ? 'Live score' : 'Score so far (the rink hasn&rsquo;t marked this game final yet)'} from the rink&rsquo;s game center. The league sheet hasn&rsquo;t been updated yet, so ${g.fromRink === 'final' ? 'scorers and penalties will show up once it is.' : 'this game isn&rsquo;t in the standings yet.'}</p>` : ''}
 ${videoPlayer(g)}
 ${linkOnly.length || g.gameCenter ? `<div class="videos">${linkOnly.map((v) => `<a class="yt" href="${esc(v.url)}" target="_blank" rel="noopener" title="${esc(v.title)}">${YT_ICON}Watch${v.team ? ` · ${esc(v.team)} video` : ''}</a>`).join('')}${g.gameCenter ?`<a class="yt gc" href="${esc(g.gameCenter.url)}" target="_blank" rel="noopener" title="This game on the rink's TimeToScore game center">${GC_ICON}Rink game center</a>${g.played ? `<a class="yt gc" href="${esc(g.gameCenter.scoresheet)}" target="_blank" rel="noopener" title="Official scoresheet (PDF) from the rink">${SHEET_ICON}Official scoresheet</a>` : ''}` : ''}</div>` : ''}`;
 
-  if (g.played) {
-    const periodTable = table(
-      [{ label: 'Team' }, ...usedPeriods.map((p) => ({ label: p, cls: 'num' })), { label: 'T', cls: 'num' }],
-      [g.away, g.home].map((t) => `<tr>${td(teamLink(t, r))}${usedPeriods.map((p) => td(goalsIn(t, p), 'num')).join('')}${td(`<b>${t === g.home ? g.homeScore : g.awayScore}</b>`, 'num')}</tr>`)
+  // Goals by period: from the stat events, or from the rink's page for rink scores.
+  const periodTable = () => {
+    const rp = g.fromRink && g.rinkPeriods;
+    const cols = rp ? rp.map((p) => p.period) : usedPeriods;
+    const goalsAt = (t, p, i) => (rp ? rp[i][t === g.home ? 'home' : 'away'] : goalsIn(t, p));
+    return table(
+      [{ label: 'Team' }, ...cols.map((p) => ({ label: p, cls: 'num' })), { label: 'T', cls: 'num' }],
+      [g.away, g.home].map((t) => `<tr>${td(teamLink(t, r))}${cols.map((p, i) => td(goalsAt(t, p, i), 'num')).join('')}${td(`<b>${shown(g)[t === g.home ? 'homeScore' : 'awayScore']}</b>`, 'num')}</tr>`)
     );
+  };
+  if (g.live && g.rinkPeriods) body += `
+<h2>Scoring by period</h2>${periodTable()}`;
+  if (g.played) {
     const evRows = (type) => g.events
       .filter((e) => (type === 'goal' ? /goal/i.test(e.type) : e.type === 'Penalty'))
       .sort((a, b) => periods.indexOf(a.period) - periods.indexOf(b.period))
@@ -479,10 +503,10 @@ ${linkOnly.length || g.gameCenter ? `<div class="videos">${linkOnly.map((v) => `
     const pens = evRows('pen');
     const evCols = [{ label: 'Per', cls: 'num' }, { label: 'Team' }, { label: '#', cls: 'num' }, { label: 'Player' }, { label: '' }];
     body += `
-<h2>Scoring by period</h2>${periodTable}
+<h2>Scoring by period</h2>${periodTable()}
 <div class="grid-2">
-<section><h2>Goals</h2>${goals.length ? table(evCols, goals) : '<p class="muted">No goal details recorded.</p>'}</section>
-<section><h2>Penalties</h2>${pens.length ? table(evCols, pens) : '<p class="muted">No penalties.</p>'}</section>
+<section><h2>Goals</h2>${goals.length ? table(evCols, goals) : `<p class="muted">${g.fromRink ? 'Scorers will show up once the league sheet is updated.' : 'No goal details recorded.'}</p>`}</section>
+<section><h2>Penalties</h2>${pens.length ? table(evCols, pens) : `<p class="muted">${g.fromRink ? 'Penalties will show up once the league sheet is updated.' : 'No penalties.'}</p>`}</section>
 </div>
 <h2>Goalies</h2>
 ${table([{ label: 'Team' }, { label: 'Goalie' }, { label: 'Decision' }], [g.away, g.home].map((t) => {
@@ -687,7 +711,7 @@ ${table([
   <h1>${p.number ? `<span class="muted">#${esc(p.number)}</span> ` : ''}${esc(p.name)}${p.captain ? ' <i class="badge" title="Captain">C</i>' : ''}</h1>
   <p>${p.teams.length ? p.teams.map((n) => teamLink(n, pr)).join(' · ') : 'Sub pool'}${p.position ? ` · ${esc(p.position)}` : ''}</p>
 </div>
-<div class="tiles">${tile('Goals', p.goals)}${p.teamGoalPct !== null ? tile('Team goal %', pct(p.teamGoalPct), `${p.teamGoals} of ${teamOf(p.team).gf} ${esc(p.team)} goals`) : ''}${tile('Shootout goals', p.soGoals)}${tile('PIM', p.pim)}${tile('Games subbed', p.subGames)}</div>
+<div class="tiles">${tile('Goals', p.goals)}${p.teamGoalPct !== null ? tile('Team goal %', pct(p.teamGoalPct), `${p.teamGoals} of ${teamOf(p.team).gf - teamOf(p.team).rinkGf} ${esc(p.team)} goals`) : ''}${tile('Shootout goals', p.soGoals)}${tile('PIM', p.pim)}${tile('Games subbed', p.subGames)}</div>
 ${asGoalie.length ? `<h2>Goaltending</h2>${table([{ label: 'Team' }, { label: 'Role' }, { label: 'GP', cls: 'num' }, { label: 'Record' }, { label: 'GA', cls: 'num' }, { label: 'GAA', cls: 'num' }, { label: 'SHO', cls: 'num' }],
   asGoalie.map((s) => `<tr>${[td(teamLink(s.team, pr)), td(s.main ? 'Regular' : 'Sub'), td(s.gp, 'num'), td(rec(s)), td(s.ga, 'num'), td(fmt2(s.gaa), 'num'), td(s.sho, 'num')].join('')}</tr>`))}` : ''}
 <h2>Game log</h2>
