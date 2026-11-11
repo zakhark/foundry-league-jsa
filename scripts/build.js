@@ -74,10 +74,20 @@ const logoOf = (name) => {
 };
 // A square in the team colour with the team's initials, e.g. "K" for Kodiaks.
 const placeholderLogo = (name) => {
-  const initials = name.split(/s+/).filter(Boolean).map((w) => w[0]).join('').slice(0, 2).toUpperCase();
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96"><rect width="96" height="96" fill="${teamColor(name)}"/><text x="48" y="50" text-anchor="middle" dominant-baseline="central" font-family="system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif" font-weight="800" font-size="${initials.length > 1 ? 38 : 46}" fill="#fff">${esc(initials)}</text></svg>
+  const initials = name.split(/\s+/).filter(Boolean).map((w) => w[0]).join('').slice(0, 2).toUpperCase();
+  const bg = teamColor(name);
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96"><rect width="96" height="96" fill="${bg}"/><text x="48" y="50" text-anchor="middle" dominant-baseline="central" font-family="system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif" font-weight="800" font-size="${initials.length > 1 ? 38 : 46}" fill="${isLight(bg) ? '#15202b' : '#fff'}">${esc(initials)}</text></svg>
 `;
 };
+// True for a light #rrggbb colour (e.g. yellow), where white text would be hard
+// to read. Generated hsl() colours are mid-lightness, so they keep white text.
+function isLight(color) {
+  const m = /^#([0-9a-f]{6})$/i.exec(color);
+  if (!m) return false;
+  const lin = (i) => { const v = parseInt(m[1].slice(i, i + 2), 16) / 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; };
+  const lum = 0.2126 * lin(0) + 0.7152 * lin(2) + 0.0722 * lin(4);
+  return (1.05 / (lum + 0.05)) < 4.5; // white text falls below WCAG AA
+}
 // Small team marker next to a team name.
 const teamMark = (name, r) => {
   const logo = logoOf(name);
@@ -106,12 +116,12 @@ const GC_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="tr
 const SHEET_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>';
 function teamSocial(t) {
   const links = [];
-  if (t.links.youtube) links.push(`<a class="yt" href="${esc(t.links.youtube)}" target="_blank" rel="noopener">${YT_ICON}YouTube</a>`);
+  if (t.links.youtube) links.push(`<a class="pill yt" href="${esc(t.links.youtube)}" target="_blank" rel="noopener">${YT_ICON}YouTube</a>`);
   if (t.links.instagram) {
     const handle = t.links.instagram.replace(/\/+$/, '').split('/').pop();
-    links.push(`<a class="yt ig" href="${esc(t.links.instagram)}" target="_blank" rel="noopener">${IG_ICON}@${esc(handle)}</a>`);
+    links.push(`<a class="pill ig" href="${esc(t.links.instagram)}" target="_blank" rel="noopener">${IG_ICON}@${esc(handle)}</a>`);
   }
-  if (t.gameCenter) links.push(`<a class="yt gc" href="${esc(t.gameCenter)}" target="_blank" rel="noopener">${GC_ICON}Rink team page</a>`);
+  if (t.gameCenter) links.push(`<a class="pill gc" href="${esc(t.gameCenter)}" target="_blank" rel="noopener">${GC_ICON}Rink team page</a>`);
   return links.length ? `<div class="social">${links.join('')}</div>` : '';
 }
 // Play icon next to a result, linking to the game's (first) video.
@@ -193,6 +203,19 @@ const NAV = [
   ['videos.html', 'Videos'],
 ];
 
+// Hosts serve 404.html at whatever address was asked for (e.g. /teams/old.html),
+// so its relative links would point into the wrong folder. This sets a <base>
+// at the site root before anything loads: the part of the path before a known
+// subfolder, else the folder of the address. Works at a domain root and under
+// a GitHub Pages project path alike.
+const NOT_FOUND_BASE = `
+<script>(function () {
+  var p = location.pathname, m = /^(.*?\\/)(?:teams|games|players|calendar|benchapp|logos|seasons)\\//.exec(p);
+  var b = document.createElement('base');
+  b.href = m ? m[1] : p.replace(/[^/]*$/, '');
+  document.head.appendChild(b);
+})();</script>`;
+
 function page({ file, title, body, desc }) {
   const depth = file.split('/').length - 1;
   const r = '../'.repeat(depth);
@@ -207,6 +230,8 @@ function page({ file, title, body, desc }) {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0d2340" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#08111c" media="(prefers-color-scheme: dark)">${file === '404.html' ? NOT_FOUND_BASE : ''}
 <title>${esc(title ? `${title} · ${LEAGUE}` : LEAGUE)}</title>
 <meta name="description" content="${esc(desc || `${LEAGUE} ${SEASON} standings, schedule and stats`)}">
 <link rel="icon" href="${r}logo.png" type="image/png">
@@ -241,7 +266,9 @@ function table(cols, rows, opts = {}) {
   const head = cols
     .map((c) => `<th${c.cls ? ` class="${c.cls}"` : ''}${c.title ? ` title="${esc(c.title)}"` : ''}${c.sort !== false && opts.sortable ? ` data-sort="${c.sort || 'num'}"` : ''}>${c.label}</th>`)
     .join('');
-  return `<div class="table-wrap"><table${opts.id ? ` id="${opts.id}"` : ''}${opts.sortable ? ' class="sortable"' : ''}>
+  // opts.pin: the column (1 or 2) that stays in view when a wide table scrolls sideways.
+  const cls = [opts.sortable && 'sortable', opts.pin && `pin-${opts.pin}`].filter(Boolean).join(' ');
+  return `<div class="table-wrap"><table${opts.id ? ` id="${opts.id}"` : ''}${cls ? ` class="${cls}"` : ''}>
 <thead><tr>${head}</tr></thead>
 <tbody>
 ${rows.join('\n')}
@@ -281,7 +308,7 @@ function standingsTable(r, compact = false) {
     if (!compact) cells.push(rate(t.gfpg, t.offRank, 'offense'), rate(t.gapg, t.defRank, 'defense', true), td(t.pim, 'num'), td(esc(t.streak)), td(form(t.last5)));
     return `<tr>${cells.join('')}</tr>`;
   });
-  return table(cols, rows, { sortable: true });
+  return table(cols, rows, { sortable: true, pin: 2 });
 }
 
 function gameCard(g, r) {
@@ -477,7 +504,7 @@ for (const g of D.games) {
 <p class="center-text muted">${dateLabel(g)} · ${esc(g.time)} · ${place(g)} · Week ${g.week ?? '–'}${g.playoff ? ' · Playoffs' : ''}</p>
 ${g.comment ? `<p class="note">${esc(g.comment)}</p>` : ''}${g.fromRink ? `<p class="note rink-note">${g.fromRink === 'final' ? 'Final score' : liveLabel(g) === 'Live' ? 'Live score' : 'Score so far (the rink hasn&rsquo;t marked this game final yet)'} from the rink&rsquo;s game center. The league sheet hasn&rsquo;t been updated yet, so ${g.fromRink === 'final' ? 'scorers and penalties will show up once it is.' : 'this game isn&rsquo;t in the standings yet.'}</p>` : ''}
 ${videoPlayer(g)}
-${linkOnly.length || g.gameCenter ? `<div class="videos">${linkOnly.map((v) => `<a class="yt" href="${esc(v.url)}" target="_blank" rel="noopener" title="${esc(v.title)}">${YT_ICON}Watch${v.team ? ` · ${esc(v.team)} video` : ''}</a>`).join('')}${g.gameCenter ?`<a class="yt gc" href="${esc(g.gameCenter.url)}" target="_blank" rel="noopener" title="This game on the rink's TimeToScore game center">${GC_ICON}Rink game center</a>${g.played ? `<a class="yt gc" href="${esc(g.gameCenter.scoresheet)}" target="_blank" rel="noopener" title="Official scoresheet (PDF) from the rink">${SHEET_ICON}Official scoresheet</a>` : ''}` : ''}</div>` : ''}`;
+${linkOnly.length || g.gameCenter ? `<div class="videos">${linkOnly.map((v) => `<a class="pill yt" href="${esc(v.url)}" target="_blank" rel="noopener" title="${esc(v.title)}">${YT_ICON}Watch${v.team ? ` · ${esc(v.team)} video` : ''}</a>`).join('')}${g.gameCenter ?`<a class="pill gc" href="${esc(g.gameCenter.url)}" target="_blank" rel="noopener" title="This game on the rink's TimeToScore game center">${GC_ICON}Rink game center</a>${g.played ? `<a class="pill gc" href="${esc(g.gameCenter.scoresheet)}" target="_blank" rel="noopener" title="Official scoresheet (PDF) from the rink">${SHEET_ICON}Official scoresheet</a>` : ''}` : ''}</div>` : ''}`;
 
   // Goals by period: from the stat events, or from the rink's page for rink scores.
   const periodTable = () => {
@@ -553,9 +580,9 @@ function teamFileLinks(t, r, short = false) {
   const CAL_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>';
   const icsHref = `${r}calendar/${t.slug}.ics`;
   return [
-    `<a class="yt gc" href="${r}benchapp/${t.slug}.csv" download title="BenchApp's Import Events file with ${esc(t.name)} games">${SHEET_ICON}${short ? 'BenchApp CSV' : 'BenchApp import (CSV)'}</a>`,
-    `<a class="yt gc" href="${icsHref}" data-subscribe title="Add ${esc(t.name)} games to your calendar app; it stays up to date">${CAL_ICON}${short ? 'Subscribe' : 'Subscribe to calendar'}</a>`,
-    `<button type="button" class="yt gc" data-copy="${icsHref}" title="Copy the calendar link, e.g. for BenchApp's calendar sync or Google Calendar (From URL)">${short ? 'Copy link' : 'Copy calendar link'}</button>`,
+    `<a class="pill gc" href="${r}benchapp/${t.slug}.csv" download title="BenchApp's Import Events file with ${esc(t.name)} games">${SHEET_ICON}${short ? 'BenchApp CSV' : 'BenchApp import (CSV)'}</a>`,
+    `<a class="pill gc" href="${icsHref}" data-subscribe title="Add ${esc(t.name)} games to your calendar app; it stays up to date">${CAL_ICON}${short ? 'Subscribe' : 'Subscribe to calendar'}</a>`,
+    `<button type="button" class="pill gc" aria-live="polite" data-copy="${icsHref}" title="Copy the calendar link, e.g. for BenchApp's calendar sync or Google Calendar (From URL)">${short ? 'Copy link' : 'Copy calendar link'}</button>`,
   ];
 }
 // How to use the files (same text on team pages and the Schedule page).
@@ -637,7 +664,7 @@ function allTeamFiles(r) {
   <a href="#roster">Roster</a><a href="#games">Schedule</a><a href="#h2h">Head to head</a><a href="#goalies">Goalies</a>
 </div>
 <section id="roster"><h2>Roster</h2>
-${table([{ label: '#', cls: 'num' }, { label: 'Player', sort: 'text' }, { label: 'Pos', sort: 'text' }, { label: 'G', cls: 'num', title: 'Goals for this team' }, { label: 'Team G%', cls: 'num', title: "Share of the team's goals (regular season)" }, { label: 'SO', cls: 'num', title: 'Shootout goals' }, { label: 'PIM', cls: 'num' }], roster, { sortable: true })}
+${table([{ label: '#', cls: 'num' }, { label: 'Player', sort: 'text' }, { label: 'Pos', sort: 'text' }, { label: 'G', cls: 'num', title: 'Goals for this team' }, { label: 'Team G%', cls: 'num', title: "Share of the team's goals (regular season)" }, { label: 'SO', cls: 'num', title: 'Shootout goals' }, { label: 'PIM', cls: 'num' }], roster, { sortable: true, pin: 2 })}
 <p class="muted small">Stats count games played for ${esc(t.name)} only.${subsUsed.length ? ` ${esc(t.name)} have used ${subsUsed.length} sub${subsUsed.length === 1 ? '' : 's'} this season.` : ''}</p>
 </section>
 <section id="games"><h2>Schedule &amp; results</h2>
@@ -686,7 +713,7 @@ ${table([
   { label: 'SO', cls: 'num', title: 'Shootout goals' },
   { label: 'Sub G', cls: 'num', title: 'Goals scored while subbing for another team' },
   { label: 'PIM', cls: 'num', title: 'Penalty minutes' }, { label: 'Subbed', cls: 'num', title: 'Games played as a sub' },
-], rows, { sortable: true })}
+], rows, { sortable: true, pin: 1 })}
 <p class="muted small">Click a column heading to sort. The league records goals only (no assists).</p>`;
   page({ file: 'players.html', title: 'Players', body });
 
@@ -735,8 +762,8 @@ ${log.length ? table([{ label: 'Game', cls: 'num' }, { label: 'Date' }, { label:
   ];
   const byGaa = (a, b) => a.gaa - b.gaa || b.gp - a.gp;
   const body = `<h1>Goalies</h1>
-<h2>Regular goalies</h2>${table(cols, D.goalies.filter((s) => s.main).sort(byGaa).map(row), { sortable: true })}
-<h2>Sub goalies</h2>${table(cols, D.goalies.filter((s) => !s.main).sort(byGaa).map(row), { sortable: true })}
+<h2>Regular goalies</h2>${table(cols, D.goalies.filter((s) => s.main).sort(byGaa).map(row), { sortable: true, pin: 1 })}
+<h2>Sub goalies</h2>${table(cols, D.goalies.filter((s) => !s.main).sort(byGaa).map(row), { sortable: true, pin: 1 })}
 <p class="muted small">Based on the starting goalie of each game. Shootout goals don't count as goals against.</p>`;
   page({ file: 'goalies.html', title: 'Goalies', body });
 }
@@ -773,7 +800,7 @@ ${table([{ label: 'Game', cls: 'num' }, { label: 'Date' }, { label: 'Player', so
   const withVideo = D.standings.filter((t) => games.some((g) => g.home === t.name || g.away === t.name));
   const options = withVideo.map((t) => `<option value="${t.slug}">${esc(t.name)}</option>`).join('');
   const channels = D.standings.filter((t) => t.links.youtube)
-    .map((t) => `<a class="yt" href="${esc(t.links.youtube)}" target="_blank" rel="noopener">${YT_ICON}${esc(t.name)}</a>`).join('');
+    .map((t) => `<a class="pill yt" href="${esc(t.links.youtube)}" target="_blank" rel="noopener">${YT_ICON}${esc(t.name)}</a>`).join('');
   const body = `<h1>Game videos</h1>
 <p class="lede">${games.length} games from this season have video, filmed by the teams themselves. Newest first.</p>
 ${channels ? `<div class="social">${channels}</div>` : ''}
