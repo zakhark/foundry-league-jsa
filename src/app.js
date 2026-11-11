@@ -10,6 +10,15 @@
     });
   }
 
+  // Keep --header-h equal to the sticky header's real height (it changes with
+  // the phone menu and font size), so tabs and toolbars stick just below it.
+  const header = document.querySelector('header.site');
+  if (header && 'ResizeObserver' in window) {
+    new ResizeObserver(() => {
+      document.documentElement.style.setProperty('--header-h', `${header.offsetHeight}px`);
+    }).observe(header);
+  }
+
   // Sortable tables: click a heading to sort; click again to reverse.
   document.querySelectorAll('table.sortable').forEach((table) => {
     const heads = table.querySelectorAll('th');
