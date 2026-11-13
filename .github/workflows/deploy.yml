@@ -55,6 +55,10 @@ jobs:
           SHEET_ID: ${{ secrets.SHEET_ID }}
       - name: Scores from the rink for games the sheet has no score for yet (best effort)
         run: npm run rink-scores || echo "Rink scores failed; building without them"
+      - name: Black Bear TV stream links (best effort)
+        run: npm run blackbear || echo "Black Bear TV links failed; building without them"
+        env:
+          BLACKBEAR_API_KEY: ${{ secrets.BLACKBEAR_API_KEY }}
       - name: Find new game videos (best effort)
         run: npm run videos || echo "Video search failed; using saved game-videos.json"
       - run: npm run build

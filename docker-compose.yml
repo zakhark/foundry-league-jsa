@@ -8,6 +8,7 @@ services:
     environment:
       REFRESH_SECONDS: "900"
       SHEET_ID: ${SHEET_ID:?Set SHEET_ID in .env (see .env.example)}
+      BLACKBEAR_API_KEY: ${BLACKBEAR_API_KEY:-}
     volumes:
       - site:/app/dist
     restart: unless-stopped

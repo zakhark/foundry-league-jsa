@@ -399,6 +399,16 @@ function assemble(raw) {
     }
   }
 
+  // ---------- Black Bear TV streams (optional; see scripts/blackbear.js) ----------
+  // Only the current list from Black Bear TV: games it no longer has get no link.
+  const bb = fs.existsSync(config.blackbear.file) ? JSON.parse(fs.readFileSync(config.blackbear.file, 'utf8')) : {};
+  if (String(bb.season) === String(season)) {
+    for (const [num, id] of Object.entries(bb.games || {})) {
+      const g = gameByNum.get(Number(num));
+      if (g && Number.isInteger(id) && id > 0) g.blackbear = `https://blackbearsports.tv/watch/${id}`;
+    }
+  }
+
   // ---------- Rink game center links (optional; see scripts/game-center.js) ----------
   const gameCenterTeams = new Map();
   const gcRaw = fs.existsSync(GAME_CENTER_FILE) ? JSON.parse(fs.readFileSync(GAME_CENTER_FILE, 'utf8')) : null;
