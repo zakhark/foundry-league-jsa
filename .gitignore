@@ -8,6 +8,8 @@ data/*.xlsx
 data/*.csv
 # Scores fetched from the rink at build time (npm run rink-scores)
 data/rink-scores.json
+# Black Bear TV links fetched at build time (npm run blackbear)
+data/blackbear.json
 # Local secrets and settings
 .env
 .env.*

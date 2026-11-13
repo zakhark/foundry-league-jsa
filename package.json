@@ -6,12 +6,13 @@
   "scripts": {
     "fetch": "node scripts/fetch.js",
     "build": "node scripts/build.js",
-    "all": "node scripts/fetch.js && node scripts/rink-scores.js && node scripts/build.js",
+    "all": "node scripts/fetch.js && node scripts/rink-scores.js && node scripts/blackbear.js && node scripts/build.js",
     "serve": "node scripts/serve.js",
     "videos": "node scripts/find-videos.js",
     "game-center": "node scripts/game-center.js",
     "freeze-season": "node scripts/freeze-season.js",
-    "rink-scores": "node scripts/rink-scores.js"
+    "rink-scores": "node scripts/rink-scores.js",
+    "blackbear": "node scripts/blackbear.js"
   },
   "dependencies": {
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"

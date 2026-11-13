@@ -61,6 +61,16 @@ module.exports = {
   // hours are looked up, i.e. the game night and the day after. The build
   // ignores a file older than that.
   rinkScores: { file: 'data/rink-scores.json', hours: 36 },
+  // Black Bear TV stream links (npm run blackbear). location and category are
+  // Black Bear TV's IDs for Jersey Shore Arena and "Adult League". teamNames:
+  // Black Bear TV's spelling -> ours, where they differ beyond case and spaces.
+  blackbear: {
+    file: 'data/blackbear.json',
+    api: 'https://blackbear-ep-drbwhnh8gtdafucc.a03.azurefd.net',
+    location: 91,
+    category: 136,
+    teamNames: { Ducks: 'UnDucks' },
+  },
   // The public site address, used for links inside calendar events.
   siteUrl: process.env.SITE_URL || 'https://zakhark.github.io/foundry-league-jsa/',
 };
