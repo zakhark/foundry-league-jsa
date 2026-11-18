@@ -543,12 +543,14 @@ function build(d) {
 
   // Players: rostered players plus anyone appearing in events or the sub list.
   const players = new Map();
+  const blankStats = () => ({ subGames: 0, goals: 0, soGoals: 0, pim: 0 });
   const player = (name) => {
     const key = name.toLowerCase();
     if (!players.has(key)) {
       players.set(key, {
         name, slug: slugify(name), team: '', teams: [], number: '', position: '', captain: '',
-        goals: 0, soGoals: 0, pim: 0, penalties: 0, subGames: 0, teamGoals: 0, teamGoalPct: null,
+        goals: 0, soGoals: 0, pim: 0, penalties: 0, teamGoals: 0, teamGoalPct: null,
+        stats: { team: blankStats(), sub: blankStats(), total: blankStats() }, // filled in below
         log: new Map(), // game num -> { team, goals, soGoals, pim, penalties: [] }
       });
     }
@@ -579,23 +581,30 @@ function build(d) {
   }
   for (const s of d.subs) {
     const p = player(s.player);
-    p.subGames++;
     logFor(p, s.game, s.team).sub = true;
   }
-  // Players listed on a team's roster only get stats credited for games they
-  // played for that team; goals scored while subbing are flagged separately.
+  // Split each player's stats: games for their own roster team(s), games as a
+  // sub (sub list, or any other team), and the total. Games played aren't
+  // known for team games (the sheet doesn't record attendance), only for subs.
+  const gameByNum = new Map(d.games.map((g) => [g.num, g]));
   for (const p of players.values()) {
-    p.subGoals = 0;
-    for (const [, e] of p.log) if (p.team && !p.teams.includes(e.team)) p.subGoals += e.goals;
+    const subGames = new Set();
+    for (const [num, e] of p.log) {
+      const s = e.sub || !p.teams.includes(e.team) ? p.stats.sub : p.stats.team;
+      s.goals += e.goals; s.soGoals += e.soGoals; s.pim += e.pim;
+      const g = gameByNum.get(num);
+      if (s === p.stats.sub && g && g.played) subGames.add(num);
+    }
+    p.stats.sub.subGames = p.stats.total.subGames = subGames.size;
+    for (const k of ['goals', 'soGoals', 'pim']) p.stats.total[k] = p.stats.team[k] + p.stats.sub[k];
   }
   // Share of their team's goals: regular-season goals for their (first) roster
   // team, divided by that team's GF. Like GF, playoff games don't count.
-  const gameByNum = new Map(d.games.map((g) => [g.num, g]));
   for (const p of players.values()) {
     p.teamGoals = 0;
     for (const [num, e] of p.log) {
       const g = gameByNum.get(num);
-      if (p.team && e.team === p.team && g && !g.playoff) p.teamGoals += e.goals;
+      if (p.team && e.team === p.team && !e.sub && g && !g.playoff) p.teamGoals += e.goals;
     }
     const t = p.team && teams.get(p.team);
     // Rink-only scores have no scorers yet, so leave those games out.
