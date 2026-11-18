@@ -118,17 +118,21 @@
     });
   });
 
-  // Filters: team select, name search, and "Show" (all games / results / upcoming).
-  // The team and show choices are kept in the URL (?team=reapers&show=results),
+  // Filters: team select, name search, "Show" (all games / results / upcoming)
+  // and "Stats" (players' team / sub / total numbers).
+  // The team, show and stats choices are kept in the URL (?team=reapers&show=results),
   // so filtered views can be linked to.
   const team = document.querySelector('[data-filter="team"]');
   const name = document.querySelector('[data-filter="name"]');
   const which = document.querySelector('[data-filter="show"]');
-  if (!team && !name && !which) return;
+  const view = document.querySelector('[data-filter="view"]');
+  if (!team && !name && !which && !view) return;
 
   const params = new URLSearchParams(location.search);
   if (team && params.get('team')) team.value = params.get('team');
   if (which && ['results', 'upcoming'].includes(params.get('show'))) which.value = params.get('show');
+  if (view && ['team', 'sub', 'total'].includes(params.get('stats'))) view.value = params.get('stats');
+  if (view) document.querySelectorAll('.view-title').forEach((h) => { h.hidden = true; });
 
   const apply = () => {
     const t = team ? team.value : '';
@@ -142,19 +146,21 @@
         (!w || (w === 'upcoming') === tr.classList.contains('upcoming'));
       tr.hidden = !show;
     });
+    // Stats views: [data-view] lists the views an element belongs to (tables, tiles, game-log rows).
+    if (view) document.querySelectorAll('[data-view]').forEach((el) => { el.hidden = !el.dataset.view.split(' ').includes(view.value); });
     // Hide schedule weeks with no visible games.
     document.querySelectorAll('[data-week]').forEach((sec) => {
       sec.hidden = !sec.querySelector('tbody tr:not([hidden])');
     });
-    if (team || which) {
+    if (team || which || view) {
       const url = new URL(location.href);
-      for (const [key, value] of [['team', t], ['show', w]]) {
+      for (const [key, value] of [['team', t], ['show', w], ['stats', view && view.value !== 'team' ? view.value : '']]) {
         if (value) url.searchParams.set(key, value);
         else url.searchParams.delete(key);
       }
       history.replaceState(null, '', url);
     }
   };
-  [team, name, which].forEach((el) => el && el.addEventListener(el.tagName === 'SELECT' ? 'change' : 'input', apply));
+  [team, name, which, view].forEach((el) => el && el.addEventListener(el.tagName === 'SELECT' ? 'change' : 'input', apply));
   apply();
 })();

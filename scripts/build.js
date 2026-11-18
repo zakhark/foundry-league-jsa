@@ -629,14 +629,15 @@ function allTeamFiles(r) {
     const games = D.games.filter((g) => g.home === t.name || g.away === t.name);
     const roster = t.roster.map((rp) => {
       const p = playerByName.get(rp.name.toLowerCase());
-      let goals = 0, so = 0, pim = 0, gp = 0, regGoals = 0;
+      let goals = 0, so = 0, pim = 0, regGoals = 0;
       for (const [num, e] of p.log) {
-        if (e.team !== t.name) continue;
-        goals += e.goals; so += e.soGoals; pim += e.pim; gp++;
+        if (e.team !== t.name || e.sub) continue;
+        goals += e.goals; so += e.soGoals; pim += e.pim;
         const g = D.games.find((x) => x.num === num);
         if (g && !g.playoff) regGoals += e.goals;
       }
-      const share = t.gf ? regGoals / t.gf : null;
+      // Rink-only scores have no scorers yet, so leave those goals out (as on player pages).
+      const share = t.gf - t.rinkGf ? regGoals / (t.gf - t.rinkGf) : null;
       return `<tr>${[
         td(esc(rp.number), 'num', Number(rp.number) || 999), td(`${playerLink(rp.name, r)}${rp.captain ? ' <i class="badge" title="Captain">C</i>' : ''}`, '', rp.name),
         td(esc(rp.position), '', rp.position), td(goals, 'num'), td(share ? pct(share) : '', 'num', share ?? -1), td(so || '', 'num', so), td(pim, 'num'),
@@ -689,32 +690,39 @@ function ordinal(n) {
   const r = '';
   const list = D.players.filter((p) => p.team || p.log.size || D.goalies.some((s) => s.name === p.name));
   const options = D.standings.map((t) => `<option value="${t.slug}">${esc(t.name)}</option>`).join('');
-  const rows = list
-    .sort((a, b) => b.goals - a.goals || b.soGoals - a.soGoals || a.name.localeCompare(b.name))
+  // One table per view (own team / as a sub / total); the "Stats" switch shows one.
+  const VIEWS = [['team', 'For their team'], ['sub', 'As a sub'], ['total', 'Total']];
+  const viewTable = (view) => table([
+    { label: 'Player', sort: 'text' }, { label: 'Team', sort: 'text' }, { label: '#', cls: 'num' }, { label: 'Pos', sort: 'text' },
+    { label: 'G', cls: 'num', title: 'Goals' },
+    ...(view === 'sub' ? [] : [{ label: 'Team G%', cls: 'num', title: "Share of their team's goals: regular-season goals for their roster team (not as a sub) divided by that team's goals for" }]),
+    { label: 'SO', cls: 'num', title: 'Shootout goals' }, { label: 'PIM', cls: 'num', title: 'Penalty minutes' },
+    ...(view === 'team' ? [] : [{ label: 'Subbed', cls: 'num', title: 'Games played as a sub' }]),
+  ], list
+    .filter((p) => (view === 'team' ? p.teams.length : view === 'sub' ? p.stats.sub.subGames || p.stats.sub.goals || p.stats.sub.pim : true))
+    .sort((a, b) => b.stats[view].goals - a.stats[view].goals || b.stats[view].soGoals - a.stats[view].soGoals || a.name.localeCompare(b.name))
     .map((p) => {
-      const teams = [...new Set([...p.teams, ...[...p.log.values()].map((e) => e.team)])].map((n) => (teamOf(n) ? teamOf(n).slug : '')).join(' ');
+      const st = p.stats[view];
+      // The team filter matches the teams this view's games were for.
+      const inView = [...p.log.values()].filter((e) => view === 'total' || (view === 'sub') === Boolean(e.sub || !p.teams.includes(e.team))).map((e) => e.team);
+      const teams = [...new Set([...(view === 'sub' ? [] : p.teams), ...inView])].map((n) => (teamOf(n) ? teamOf(n).slug : '')).join(' ');
       return `<tr data-teams="${teams}" data-name="${esc(p.name.toLowerCase())}">${[
         td(playerLink(p.name, r), '', p.name),
         td(p.teams.length ? p.teams.map((n) => teamLink(n, r)).join('<br>') : '<span class="muted">Sub pool</span>', '', p.team || 'zzz'),
         td(esc(p.number), 'num', Number(p.number) || 999), td(esc(p.position || 'Sub'), '', p.position),
-        td(p.goals, 'num'), td(p.teamGoalPct ? pct(p.teamGoalPct) : '', 'num', p.teamGoalPct ?? -1),
-        td(p.soGoals || '', 'num', p.soGoals), td(p.subGoals || '', 'num', p.subGoals),
-        td(p.pim, 'num'), td(p.subGames || '', 'num', p.subGames),
+        td(st.goals, 'num'),
+        ...(view === 'sub' ? [] : [td(p.teamGoalPct ? pct(p.teamGoalPct) : '', 'num', p.teamGoalPct ?? -1)]),
+        td(st.soGoals || '', 'num', st.soGoals), td(st.pim, 'num'),
+        ...(view === 'team' ? [] : [td(st.subGames || '', 'num', st.subGames)]),
       ].join('')}</tr>`;
-    });
+    }), { sortable: true, pin: 1 });
   const body = `<h1>Players</h1>
 <div class="toolbar">
   <label>Search <input type="search" data-filter="name" placeholder="Player name"></label>
   <label>Team <select data-filter="team"><option value="">All teams</option>${options}</select></label>
+  <label>Stats <select data-filter="view">${VIEWS.map(([v, l]) => `<option value="${v}">${l}</option>`).join('')}</select></label>
 </div>
-${table([
-  { label: 'Player', sort: 'text' }, { label: 'Team', sort: 'text' }, { label: '#', cls: 'num' }, { label: 'Pos', sort: 'text' },
-  { label: 'G', cls: 'num', title: 'Goals (all teams)' },
-  { label: 'Team G%', cls: 'num', title: "Share of their team's goals: regular-season goals for their roster team divided by that team's goals for" },
-  { label: 'SO', cls: 'num', title: 'Shootout goals' },
-  { label: 'Sub G', cls: 'num', title: 'Goals scored while subbing for another team' },
-  { label: 'PIM', cls: 'num', title: 'Penalty minutes' }, { label: 'Subbed', cls: 'num', title: 'Games played as a sub' },
-], rows, { sortable: true, pin: 1 })}
+${VIEWS.map(([v, l]) => `<section data-view="${v}"><h2 class="view-title">${l}</h2>${viewTable(v)}</section>`).join('')}
 <p class="muted small">Click a column heading to sort. The league records goals only (no assists).</p>`;
   page({ file: 'players.html', title: 'Players', body });
 
@@ -725,21 +733,30 @@ ${table([
       if (!g) return '';
       const opp = g.home === e.team ? g.away : g.home;
       const res = g.played ? (g.tie ? 'T' : g.winner === e.team ? 'W' : g.ot ? 'OTL' : 'L') : '';
-      return `<tr>${[
+      const sub = e.sub || !p.teams.includes(e.team);
+      return `<tr data-view="${sub ? 'sub' : 'team'} total">${[
         td(gameLink(g, pr, `#${g.num}`), 'num', g.num), td(dateLabel(g), 'nowrap', g.date ? g.date.toISOString() : ''),
-        td(`${teamLink(e.team, pr)}${e.sub || (p.team && !p.teams.includes(e.team)) ? ' <i class="badge" title="Played as a sub">sub</i>' : ''}`),
+        td(`${teamLink(e.team, pr)}${sub && p.teams.length ? ' <i class="badge" title="Played as a sub">sub</i>' : ''}`),
         td(`${g.home === e.team ? 'vs' : '@'} ${teamLink(opp, pr)}`),
         td(res ? `<i class="badge r-${res.toLowerCase()}">${res}</i>` : ''),
         td(e.goals || '', 'num', e.goals), td(e.soGoals || '', 'num', e.soGoals), td(e.pim ? `${e.pim} <small class="muted">${esc(e.penalties.join(', '))}</small>` : '', 'num', e.pim),
       ].join('')}</tr>`;
     });
     const asGoalie = D.goalies.filter((s) => s.name === p.name);
+    // Players who played both for their team and as a sub get a switch between the two and the total.
+    const both = p.teams.length && p.stats.sub.subGames;
+    const tiles = (view) => {
+      const st = p.stats[view];
+      return `<div class="tiles"${both ? ` data-view="${view}"` : ''}>${tile('Goals', st.goals)}${
+        view !== 'sub' && p.teamGoalPct !== null ? tile('Team goal %', pct(p.teamGoalPct), `${p.teamGoals} of ${teamOf(p.team).gf - teamOf(p.team).rinkGf} ${esc(p.team)} goals`) : ''}${tile('Shootout goals', st.soGoals)}${tile('PIM', st.pim)}${view === 'team' ? '' : tile('Games subbed', st.subGames)}</div>`;
+    };
     const body = `<p class="crumbs"><a href="${pr}players.html">Players</a> › ${esc(p.name)}</p>
 <div class="team-head" style="--team:${teamColor(p.team || 'sub')}">
   <h1>${p.number ? `<span class="muted">#${esc(p.number)}</span> ` : ''}${esc(p.name)}${p.captain ? ' <i class="badge" title="Captain">C</i>' : ''}</h1>
   <p>${p.teams.length ? p.teams.map((n) => teamLink(n, pr)).join(' · ') : 'Sub pool'}${p.position ? ` · ${esc(p.position)}` : ''}</p>
 </div>
-<div class="tiles">${tile('Goals', p.goals)}${p.teamGoalPct !== null ? tile('Team goal %', pct(p.teamGoalPct), `${p.teamGoals} of ${teamOf(p.team).gf - teamOf(p.team).rinkGf} ${esc(p.team)} goals`) : ''}${tile('Shootout goals', p.soGoals)}${tile('PIM', p.pim)}${tile('Games subbed', p.subGames)}</div>
+${both ? `<div class="toolbar"><label>Stats <select data-filter="view"><option value="team">For ${esc(p.teams.join(' / '))}</option><option value="sub">As a sub</option><option value="total">Total</option></select></label></div>
+${tiles('team')}${tiles('sub')}${tiles('total')}` : tiles('total')}
 ${asGoalie.length ? `<h2>Goaltending</h2>${table([{ label: 'Team' }, { label: 'Role' }, { label: 'GP', cls: 'num' }, { label: 'Record' }, { label: 'GA', cls: 'num' }, { label: 'GAA', cls: 'num' }, { label: 'SHO', cls: 'num' }],
   asGoalie.map((s) => `<tr>${[td(teamLink(s.team, pr)), td(s.main ? 'Regular' : 'Sub'), td(s.gp, 'num'), td(rec(s)), td(s.ga, 'num'), td(fmt2(s.gaa), 'num'), td(s.sho, 'num')].join('')}</tr>`))}` : ''}
 <h2>Game log</h2>
