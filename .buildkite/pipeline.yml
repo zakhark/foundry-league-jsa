@@ -1,0 +1,37 @@
+# Experimental Buildkite pipeline, running alongside the GitHub Actions deploy
+# (.github/workflows/deploy.yml stays the real one). It builds the site once,
+# then deploys it to Cloudflare Pages as a *preview* branch ("buildkite"), so
+# production is untouched: https://buildkite.foundry-league-jsa.pages.dev
+#
+# Set up in Buildkite:
+#   - Pipeline steps (UI): buildkite-agent pipeline upload
+#   - Cluster secrets: SHEET_ID, BLACKBEAR_API_KEY, CLOUDFLARE_API_TOKEN,
+#     CLOUDFLARE_ACCOUNT_ID
+#   - `image:` only applies on Buildkite hosted agents; a self-hosted agent needs Node 22.
+
+steps:
+  - label: ":hammer: Build"
+    key: build
+    image: "node:22"
+    command:
+      - npm ci
+      - SHEET_ID="$(buildkite-agent secret get SHEET_ID)" npm run fetch
+      # Chromium renders the rink's game-center pages. The agent runs as root, which
+      # needs --no-sandbox; Debian's chromium wrapper picks up flags from /etc/chromium.d/.
+      - apt-get update -qq && apt-get install -y -qq --no-install-recommends chromium >/dev/null && echo 'CHROMIUM_FLAGS="$$CHROMIUM_FLAGS --no-sandbox"' > /etc/chromium.d/no-sandbox || echo "Couldn't install Chromium; rink scores will be skipped"
+      - npm run rink-scores || echo "Rink scores failed; building without them"
+      - BLACKBEAR_API_KEY="$(buildkite-agent secret get BLACKBEAR_API_KEY)" npm run blackbear || echo "Black Bear TV links failed; building without them"
+      - npm run videos || echo "Video search failed; using saved game-videos.json"
+      - npm run build
+    # Only dist/ is uploaded: data/sheet.xlsx holds the private tabs.
+    artifact_paths: "dist/**/*"
+
+  - label: ":cloudflare: Cloudflare Pages (preview)"
+    depends_on: build
+    image: "node:22"
+    command:
+      - buildkite-agent artifact download "dist/**/*" .
+      - export CLOUDFLARE_API_TOKEN="$(buildkite-agent secret get CLOUDFLARE_API_TOKEN)"
+      - export CLOUDFLARE_ACCOUNT_ID="$(buildkite-agent secret get CLOUDFLARE_ACCOUNT_ID)"
+      - npx --yes wrangler@4 pages deploy dist --project-name=foundry-league-jsa --branch=buildkite --commit-hash="$BUILDKITE_COMMIT"
+
