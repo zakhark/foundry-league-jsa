@@ -23,14 +23,16 @@ steps:
       - BLACKBEAR_API_KEY="$(buildkite-agent secret get BLACKBEAR_API_KEY)" npm run blackbear || echo "Black Bear TV links failed; building without them"
       - npm run videos || echo "Video search failed; using saved game-videos.json"
       - npm run build
-    # Only dist/ is uploaded: data/sheet.xlsx holds the private tabs.
-    artifact_paths: "dist/**/*"
+      # One archive instead of a glob: "dist/**/*" skipped the files at the top of dist/.
+      - tar -czf site.tgz dist
+    # Only the built site is uploaded: data/sheet.xlsx holds the private tabs.
+    artifact_paths: "site.tgz"
 
   - label: ":cloudflare: Cloudflare Pages (preview)"
     depends_on: build
     image: "node:22"
     command:
-      - buildkite-agent artifact download "dist/**/*" .
+      - buildkite-agent artifact download site.tgz . && tar -xzf site.tgz
       - export CLOUDFLARE_API_TOKEN="$(buildkite-agent secret get CLOUDFLARE_API_TOKEN)"
       - export CLOUDFLARE_ACCOUNT_ID="$(buildkite-agent secret get CLOUDFLARE_ACCOUNT_ID)"
       - npx --yes wrangler@4 pages deploy dist --project-name=foundry-league-jsa --branch=buildkite --commit-hash="$BUILDKITE_COMMIT"
