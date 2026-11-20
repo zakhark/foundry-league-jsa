@@ -138,6 +138,11 @@ const youTubeId = (url) => {
   const m = /[?&]v=([\w-]{11})/.exec(url) || /youtu\.be\/([\w-]{11})/.exec(url) || /\/(?:live|shorts|embed)\/([\w-]{11})/.exec(url);
   return m ? m[1] : '';
 };
+// Seconds as a video time: 285 → "4:45", 3884 → "1:04:44".
+const clock = (t) => {
+  const h = Math.floor(t / 3600), m = Math.floor(t / 60) % 60, s = String(t % 60).padStart(2, '0');
+  return h ? `${h}:${String(m).padStart(2, '0')}:${s}` : `${m}:${s}`;
+};
 // A card with the video thumbnail, the result and a button per team video.
 function videoCard(g, r) {
   const id = youTubeId(g.videos[0].url);
@@ -172,7 +177,7 @@ function videoPlayer(g) {
   return `<div class="player" data-player>
   <div class="frame"><a class="facade" href="${esc(first.url)}" target="_blank" rel="noopener" data-id="${first.id}" aria-label="Play the video of ${esc(g.away)} at ${esc(g.home)}"><img src="https://i.ytimg.com/vi/${first.id}/hqdefault.jpg" alt="" width="480" height="360" loading="lazy"><span class="play">${YT_ICON}</span></a></div>
   <div class="angles">${angles}<a class="open" href="${esc(first.url)}" target="_blank" rel="noopener" data-open>Open on YouTube ↗</a></div>
-</div>`;
+${vids.filter((v) => v.moments.length).map((v) => `  <ol class="moments" data-for="${v.id}" aria-label="Moments in the ${v.team ? `${esc(v.team)} ` : ''}video"${v.id === first.id ? '' : ' hidden'}>${v.moments.map((m) => `<li><a href="https://www.youtube.com/watch?v=${v.id}&amp;t=${m.t}s" target="_blank" rel="noopener" data-id="${v.id}" data-t="${m.t}"><b>${clock(m.t)}</b> ${esc(m.label)}</a></li>`).join('')}</ol>\n`).join('')}</div>`;
 }
 
 // Scores from the rink's game center (scripts/rink-scores.js) for games the

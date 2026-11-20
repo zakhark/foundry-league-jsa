@@ -58,10 +58,18 @@
     const frame = box.querySelector('.frame');
     const open = box.querySelector('[data-open]');
     const id = /^[\w-]{11}$/;
-    const play = (videoId) => {
+    const play = (videoId, start) => {
       if (!id.test(videoId)) return;
+      const playing = frame.querySelector('iframe');
+      if (start !== undefined && playing && playing.dataset.id === videoId) {
+        // Same video already playing: seek instead of reloading the player.
+        playing.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'seekTo', args: [start, true] }), '*');
+        playing.contentWindow.postMessage(JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), '*');
+        return;
+      }
       const iframe = document.createElement('iframe');
-      iframe.src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0`;
+      iframe.dataset.id = videoId;
+      iframe.src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0&enablejsapi=1${start ? `&start=${start}` : ''}`;
       iframe.title = 'Game video';
       iframe.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
       iframe.allowFullscreen = true;
@@ -71,12 +79,18 @@
     box.addEventListener('click', (e) => {
       const facade = e.target.closest('.facade');
       const angle = e.target.closest('.angle');
+      const moment = e.target.closest('.moments a');
       if (facade) {
         e.preventDefault();
         play(facade.dataset.id);
+      } else if (moment) {
+        e.preventDefault();
+        play(moment.dataset.id, Number(moment.dataset.t));
+        frame.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
       } else if (angle) {
         e.preventDefault();
         box.querySelectorAll('.angle').forEach((a) => a.setAttribute('aria-pressed', String(a === angle)));
+        box.querySelectorAll('.moments').forEach((l) => { l.hidden = l.dataset.for !== angle.dataset.id; });
         if (open) open.href = angle.href;
         const f = frame.querySelector('.facade');
         if (f) { // not playing yet: just show the other camera's thumbnail
