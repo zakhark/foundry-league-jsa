@@ -12,7 +12,8 @@
     "game-center": "node scripts/game-center.js",
     "freeze-season": "node scripts/freeze-season.js",
     "rink-scores": "node scripts/rink-scores.js",
-    "blackbear": "node scripts/blackbear.js"
+    "blackbear": "node scripts/blackbear.js",
+    "test": "node --test scripts/"
   },
   "dependencies": {
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"

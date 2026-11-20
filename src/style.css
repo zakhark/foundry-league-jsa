@@ -236,6 +236,10 @@ h2.split a { font-weight: 500; }
 .angle:hover { border-color: #ff0000; text-decoration: none; }
 .angle[aria-pressed="true"] { background: var(--text); color: var(--bg); border-color: var(--text); }
 .angles .open { margin-left: auto; }
+.moments { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; font-size: .85rem; }
+.moments a { display: inline-block; padding: 3px 10px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); color: var(--text); }
+.moments a:hover { border-color: #ff0000; text-decoration: none; }
+.moments b { font-variant-numeric: tabular-nums; margin-right: 2px; }
 /* League rank next to a per-game rate */
 small.rank { color: var(--muted); font-size: .75em; margin-left: 2px; }
 /* Schedule rows open the game page */

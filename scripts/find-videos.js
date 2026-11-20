@@ -47,16 +47,44 @@ function mentions(title, team) {
     .some((w) => t.includes(w));
 }
 
+// Timestamped lines in a video description ("04:45 Flamingos 1-0",
+// "1st Period: 0:00", "@6:30 0:1", or a time on its own line with the label on
+// the next one) as [{ t: seconds, label }], sorted by time. Fewer than two
+// timestamps is probably not a list of moments (e.g. "puck drop 7:30 PM").
+function descriptionMoments(text) {
+  const lines = String(text || '').split(/\r?\n/).map((l) => l.trim());
+  const ts = /(?:^|[\s@(])((?:\d{1,2}:)?\d{1,2}:\d{2})(?![\d:]|\s*[ap]\.?m\b)/i;
+  const moments = [];
+  lines.forEach((line, i) => {
+    const m = ts.exec(line);
+    if (!m) return;
+    const t = m[1].split(':').reduce((s, x) => s * 60 + Number(x), 0);
+    const clean = (s) => s.replace(/^[\s@:\-–—|]+|[\s@:\-–—|]+$/g, '');
+    let label = clean(line.slice(0, m.index) + ' ' + line.slice(m.index + m[0].length));
+    if (!label && lines[i + 1] && !ts.test(lines[i + 1])) label = clean(lines[i + 1]);
+    if (label) moments.push({ t, label: label.slice(0, 120) });
+  });
+  return moments.length >= 2 ? moments.sort((a, b) => a.t - b.t) : [];
+}
+
+const YT_HEADERS = {
+  'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130 Safari/537.36',
+  'accept-language': 'en-US,en;q=0.9',
+  cookie: 'CONSENT=YES+1',
+};
+
+// A video's description, from its watch page; null if it can't be read.
+async function videoDescription(url) {
+  const res = await fetch(url, { headers: YT_HEADERS });
+  if (!res.ok) return null;
+  const m = /"shortDescription":"((?:[^"\\]|\\.)*)"/.exec(await res.text());
+  return m ? JSON.parse(`"${m[1]}"`) : null;
+}
+
 async function channelVideos(url) {
   const videos = new Map();
   for (const tab of ['streams', 'videos']) {
-    const res = await fetch(`${url.replace(/\/+$/, '')}/${tab}`, {
-      headers: {
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130 Safari/537.36',
-        'accept-language': 'en-US,en;q=0.9',
-        cookie: 'CONSENT=YES+1',
-      },
-    });
+    const res = await fetch(`${url.replace(/\/+$/, '')}/${tab}`, { headers: YT_HEADERS });
     if (!res.ok) { console.warn(`  ${tab}: HTTP ${res.status}`); continue; }
     const html = await res.text();
     const m = html.match(/var ytInitialData = (\{.*?\});<\/script>/s);
@@ -123,13 +151,37 @@ async function main() {
     }
   }
 
+  // Goal timestamps from the descriptions. Re-read every run: teams often add
+  // them after uploading. A description that can't be read keeps what's saved.
+  let withMoments = 0;
+  for (const [num, list] of Object.entries(result)) {
+    if (num.startsWith('_')) continue;
+    for (const v of list) {
+      try {
+        const desc = await videoDescription(v.url);
+        if (desc === null) { console.warn(`  game #${num}: could not read the description of ${v.url}`); continue; }
+        const moments = descriptionMoments(desc);
+        if (moments.length) v.moments = moments;
+        else delete v.moments;
+      } catch (e) {
+        console.warn(`  game #${num}: ${v.url}: ${e.message}`);
+      }
+      if (v.moments) withMoments++;
+    }
+  }
+  console.log(`${withMoments} video(s) have timestamps in their description.`);
+
   const ordered = { _comment: result._comment };
   for (const k of Object.keys(result).filter((k) => !k.startsWith('_')).sort((a, b) => a - b)) ordered[k] = result[k];
   fs.writeFileSync(VIDEOS_FILE, `${JSON.stringify(ordered, null, 2)}\n`);
   console.log(`\n${added} new video link(s); ${Object.keys(ordered).length - 1} games have videos. Saved ${VIDEOS_FILE}.`);
 }
 
-main().catch((e) => {
-  console.error(e);
-  process.exit(1);
-});
+if (require.main === module) {
+  main().catch((e) => {
+    console.error(e);
+    process.exit(1);
+  });
+}
+
+module.exports = { descriptionMoments };

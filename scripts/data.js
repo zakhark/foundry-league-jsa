@@ -394,7 +394,10 @@ function assemble(raw) {
       if (!g) { warn(`${VIDEOS_FILE}: no game #${num}`); continue; }
       for (const v of [].concat(list || [])) {
         if (!v || !isYouTube(v.url)) { warn(`${VIDEOS_FILE}: game #${num} has a non-YouTube link (${v && v.url})`); continue; }
-        g.videos.push({ team: canonTeam(v.team || ''), url: v.url, title: v.title || '' });
+        const moments = [].concat(v.moments || [])
+          .filter((m) => m && Number.isInteger(m.t) && m.t >= 0 && m.t < 6 * 3600 && typeof m.label === 'string')
+          .map((m) => ({ t: m.t, label: m.label.slice(0, 120) }));
+        g.videos.push({ team: canonTeam(v.team || ''), url: v.url, title: v.title || '', moments });
       }
     }
   }

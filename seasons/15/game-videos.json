@@ -3,7 +3,85 @@
     {
       "team": "UnDucks",
       "url": "https://www.youtube.com/watch?v=g6bwLybXOnY",
-      "title": "UnDucks vs Flamingos Sep. 11 2026"
+      "title": "UnDucks vs Flamingos Sep. 11 2026",
+      "moments": [
+        {
+          "t": 0,
+          "label": "1st Period"
+        },
+        {
+          "t": 285,
+          "label": "Flamingos 1-0"
+        },
+        {
+          "t": 891,
+          "label": "Flamingos 2-0"
+        },
+        {
+          "t": 957,
+          "label": "UnDucks 2-1 (Bloodgood, Liquori)"
+        },
+        {
+          "t": 1348,
+          "label": "2nd Period"
+        },
+        {
+          "t": 1410,
+          "label": "UnDucks: 2-2 (Dobrian, Arolick)"
+        },
+        {
+          "t": 1941,
+          "label": "Ana/Cyrus Collision"
+        },
+        {
+          "t": 2204,
+          "label": "UnDucks 2-3 (Bloodgood, Liquori)"
+        },
+        {
+          "t": 2299,
+          "label": "UnDucks: 2-4 (Gentile, Liquori, Arolick)"
+        },
+        {
+          "t": 2729,
+          "label": "UnDucks: 2-5 (Gentile, Bloodgood, Liquori)"
+        },
+        {
+          "t": 2989,
+          "label": "3rd Period"
+        },
+        {
+          "t": 3038,
+          "label": "Flamingos 3-5"
+        },
+        {
+          "t": 3160,
+          "label": "UnDucks: 3-6 (Antczak, Norman)"
+        },
+        {
+          "t": 3308,
+          "label": "UnDucks: 3-7 (Antczak, Gentile)"
+        },
+        {
+          "t": 3583,
+          "label": "Flamingos: 4-7"
+        },
+        {
+          "t": 3884,
+          "label": "UnDucks: 4-8 (Gerard, Bumbernick)"
+        },
+        {
+          "t": 4000,
+          "label": "Elle/Rock injury"
+        },
+        {
+          "t": 4396,
+          "label": "UnDucks: 4-9 (Bumbernick, Gentile, Antczak)"
+        },
+        {
+          "t": 4439,
+          "label": "Flamingos: 5-9 (Footage not found, thanks BlackBear)"
+        }
+      ]
     }
   ],
   "13": [
@@ -22,14 +100,130 @@
     {
       "team": "UnDucks",
       "url": "https://www.youtube.com/watch?v=-EsL8SVNj_w",
-      "title": "UnDucks vs Whalers Sep. 14, 2026"
+      "title": "UnDucks vs Whalers Sep. 14, 2026",
+      "moments": [
+        {
+          "t": 0,
+          "label": "1st Period"
+        },
+        {
+          "t": 203,
+          "label": "UnDucks 1-0 (Antczak, Gentile, Arolick)"
+        },
+        {
+          "t": 330,
+          "label": "UnDucks 2-0 (Bloodgood, Bumbernick)"
+        },
+        {
+          "t": 479,
+          "label": "Whalers 2-1"
+        },
+        {
+          "t": 514,
+          "label": "UnDucks 3-1 (Tarantino, Bloodgood)"
+        },
+        {
+          "t": 570,
+          "label": "UnDucks 4-1 (Liquori, Tarantino, Bumbernick)"
+        },
+        {
+          "t": 1059,
+          "label": "Whalers 4-2"
+        },
+        {
+          "t": 1284,
+          "label": "2nd Period"
+        },
+        {
+          "t": 1349,
+          "label": "UnDucks 5-2 (Antczak, Bumbernick, Liquori)"
+        },
+        {
+          "t": 1537,
+          "label": "UnDucks 6-2 (Gentile, Arolick)"
+        },
+        {
+          "t": 1850,
+          "label": "UnDucks 6-3"
+        },
+        {
+          "t": 2079,
+          "label": "UnDucks 7-3 (Antczak, Gentile, Miller)"
+        },
+        {
+          "t": 2252,
+          "label": "Whalers 7-4"
+        },
+        {
+          "t": 2594,
+          "label": "3rd Period"
+        },
+        {
+          "t": 2679,
+          "label": "Whalers 7-5"
+        }
+      ]
     }
   ],
   "15": [
     {
       "team": "Sk8Balls",
       "url": "https://www.youtube.com/watch?v=aIdk37lwA9g",
-      "title": "2026.09.18 Sk8balls vs Flamingos"
+      "title": "2026.09.18 Sk8balls vs Flamingos",
+      "moments": [
+        {
+          "t": 390,
+          "label": "0:1"
+        },
+        {
+          "t": 725,
+          "label": "1:1"
+        },
+        {
+          "t": 823,
+          "label": "2:1"
+        },
+        {
+          "t": 1574,
+          "label": "3:1"
+        },
+        {
+          "t": 1637,
+          "label": "4:1"
+        },
+        {
+          "t": 1685,
+          "label": "5:1"
+        },
+        {
+          "t": 2130,
+          "label": "5:2"
+        },
+        {
+          "t": 2342,
+          "label": "6:2"
+        },
+        {
+          "t": 2606,
+          "label": "7:2"
+        },
+        {
+          "t": 2737,
+          "label": "8:2"
+        },
+        {
+          "t": 2814,
+          "label": "8:3"
+        },
+        {
+          "t": 3131,
+          "label": "9:3"
+        },
+        {
+          "t": 3173,
+          "label": "9:4"
+        }
+      ]
     }
   ],
   "16": [
@@ -57,14 +251,70 @@
     {
       "team": "UnDucks",
       "url": "https://www.youtube.com/watch?v=y4nzGzZLGKY",
-      "title": "UnDucks vs Black Squadron Sep 25, 2026"
+      "title": "UnDucks vs Black Squadron Sep 25, 2026",
+      "moments": [
+        {
+          "t": 0,
+          "label": "1st Period"
+        },
+        {
+          "t": 97,
+          "label": "UnDucks 1-0 (Ferris, Liquori, Gentile)"
+        },
+        {
+          "t": 1191,
+          "label": "2nd Period"
+        },
+        {
+          "t": 1246,
+          "label": "Black Squadron 1-1"
+        },
+        {
+          "t": 1354,
+          "label": "UnDucks 2-1 (Gentile, Gerard, Ferris)"
+        },
+        {
+          "t": 2099,
+          "label": "UnDucks 3-1 (Antczak, Clark)"
+        },
+        {
+          "t": 2588,
+          "label": "3rd Period"
+        },
+        {
+          "t": 2803,
+          "label": "UnDucks 4-1 (Gentile)"
+        }
+      ]
     }
   ],
   "24": [
     {
       "team": "Sk8Balls",
       "url": "https://www.youtube.com/watch?v=Q4Oe6H5AB6A",
-      "title": "2026.09.25 Sk8balls vs Reapers"
+      "title": "2026.09.25 Sk8balls vs Reapers",
+      "moments": [
+        {
+          "t": 329,
+          "label": "1:0"
+        },
+        {
+          "t": 602,
+          "label": "1:1"
+        },
+        {
+          "t": 709,
+          "label": "2:1"
+        },
+        {
+          "t": 900,
+          "label": "2:2"
+        },
+        {
+          "t": 3462,
+          "label": "3:2"
+        }
+      ]
     },
     {
       "team": "Reapers",
@@ -76,7 +326,53 @@
     {
       "team": "UnDucks",
       "url": "https://www.youtube.com/watch?v=3NOk36vNkSY",
-      "title": "UnDucks vs Mid Ice Crisis (10/2/26)"
+      "title": "UnDucks vs Mid Ice Crisis (10/2/26)",
+      "moments": [
+        {
+          "t": 0,
+          "label": "1st Period"
+        },
+        {
+          "t": 45,
+          "label": "Mid Ice Crisis 0-1"
+        },
+        {
+          "t": 911,
+          "label": "Mid Ice Crisis 0-2"
+        },
+        {
+          "t": 956,
+          "label": "Mid Ice Crisis 0-3"
+        },
+        {
+          "t": 1154,
+          "label": "Mid Ice Crisis 0-4"
+        },
+        {
+          "t": 1436,
+          "label": "2nd Period"
+        },
+        {
+          "t": 1591,
+          "label": "Mid Ice Crisis 0-5"
+        },
+        {
+          "t": 1759,
+          "label": "Mid Ice Crisis 0-6"
+        },
+        {
+          "t": 2385,
+          "label": "UnDucks 1-6 (Antczak, Riggs, Gentile)"
+        },
+        {
+          "t": 2931,
+          "label": "3rd Period"
+        },
+        {
+          "t": 4026,
+          "label": "Mid Ice Crisis 1-7"
+        }
+      ]
     }
   ],
   "30": [
@@ -90,14 +386,70 @@
     {
       "team": "Sk8Balls",
       "url": "https://www.youtube.com/watch?v=4qW92UI2H2A",
-      "title": "2026.10.02 Sk8balls vs Black Squadron"
+      "title": "2026.10.02 Sk8balls vs Black Squadron",
+      "moments": [
+        {
+          "t": 659,
+          "label": "1:0"
+        },
+        {
+          "t": 921,
+          "label": "2:0"
+        },
+        {
+          "t": 1378,
+          "label": "3:0"
+        },
+        {
+          "t": 1833,
+          "label": "4:0"
+        },
+        {
+          "t": 1911,
+          "label": "5:0"
+        },
+        {
+          "t": 2918,
+          "label": "6:0"
+        },
+        {
+          "t": 3071,
+          "label": "7:0"
+        },
+        {
+          "t": 3180,
+          "label": "8:0"
+        }
+      ]
     }
   ],
   "33": [
     {
       "team": "Sk8Balls",
       "url": "https://www.youtube.com/watch?v=FjbQUJkk4KY",
-      "title": "2026.10.04 Sk8balls vs Kraken"
+      "title": "2026.10.04 Sk8balls vs Kraken",
+      "moments": [
+        {
+          "t": 379,
+          "label": "1:0"
+        },
+        {
+          "t": 679,
+          "label": "2:0"
+        },
+        {
+          "t": 2310,
+          "label": "2:1"
+        },
+        {
+          "t": 2980,
+          "label": "3:1"
+        },
+        {
+          "t": 3051,
+          "label": "4:1"
+        }
+      ]
     }
   ],
   "34": [
@@ -125,14 +477,98 @@
     {
       "team": "UnDucks",
       "url": "https://www.youtube.com/watch?v=uA6O3h8pwYY",
-      "title": "UnDucks vs Yellow Jackets (10/9/26)"
+      "title": "UnDucks vs Yellow Jackets (10/9/26)",
+      "moments": [
+        {
+          "t": 0,
+          "label": "1st Period"
+        },
+        {
+          "t": 1233,
+          "label": "2nd Period"
+        },
+        {
+          "t": 1501,
+          "label": "UnDucks 1-0 (Bloodgood, Gerard, Liquori)"
+        },
+        {
+          "t": 2202,
+          "label": "Yellow Jackets 1-1"
+        },
+        {
+          "t": 2509,
+          "label": "3rd Period"
+        },
+        {
+          "t": 2650,
+          "label": "UnDucks 2-1 (Bumbernick, Antczak, Gentile)"
+        },
+        {
+          "t": 3284,
+          "label": "Yellow Jackets 2-2"
+        },
+        {
+          "t": 3810,
+          "label": "OT"
+        },
+        {
+          "t": 4113,
+          "label": "SO"
+        },
+        {
+          "t": 4115,
+          "label": "UnDucks - Gerard - Miss"
+        },
+        {
+          "t": 4141,
+          "label": "Yellow Jackets - Goal"
+        },
+        {
+          "t": 4160,
+          "label": "UnDucks - Antczak - Goal"
+        },
+        {
+          "t": 4179,
+          "label": "Yellow Jackets - Miss"
+        },
+        {
+          "t": 4211,
+          "label": "UnDucks - Bloodgood - Miss"
+        },
+        {
+          "t": 4233,
+          "label": "Yellow Jackets - Goal"
+        }
+      ]
     }
   ],
   "40": [
     {
       "team": "Sk8Balls",
       "url": "https://www.youtube.com/watch?v=e06PRWALycc",
-      "title": "2026.10.11 Sk8balls vs Clockwork Orange"
+      "title": "2026.10.11 Sk8balls vs Clockwork Orange",
+      "moments": [
+        {
+          "t": 191,
+          "label": "0:1"
+        },
+        {
+          "t": 1380,
+          "label": "1:1"
+        },
+        {
+          "t": 1764,
+          "label": "1:2"
+        },
+        {
+          "t": 2563,
+          "label": "2:2"
+        },
+        {
+          "t": 4107,
+          "label": "2:3 (SO)"
+        }
+      ]
     },
     {
       "team": "Clockwork Orange",
@@ -158,12 +594,76 @@
     {
       "team": "Sk8Balls",
       "url": "https://www.youtube.com/watch?v=P6VecRN9S4o",
-      "title": "2026.10.16 Sk8balls vs Unducks"
+      "title": "2026.10.16 Sk8balls vs Unducks",
+      "moments": [
+        {
+          "t": 174,
+          "label": "1:0"
+        },
+        {
+          "t": 1281,
+          "label": "2:0"
+        },
+        {
+          "t": 2303,
+          "label": "3:0"
+        },
+        {
+          "t": 2364,
+          "label": "4:0"
+        },
+        {
+          "t": 2950,
+          "label": "5:0"
+        },
+        {
+          "t": 3044,
+          "label": "5:1"
+        }
+      ]
     },
     {
       "team": "UnDucks",
       "url": "https://www.youtube.com/watch?v=QKbC0eM6FzM",
-      "title": "UnDucks vs Sk8 Balls (10/16/26)"
+      "title": "UnDucks vs Sk8 Balls (10/16/26)",
+      "moments": [
+        {
+          "t": 0,
+          "label": "1st Period"
+        },
+        {
+          "t": 170,
+          "label": "Sk8 Balls 0-1"
+        },
+        {
+          "t": 1261,
+          "label": "2nd Period"
+        },
+        {
+          "t": 1372,
+          "label": "Sk8 Balls 0-2"
+        },
+        {
+          "t": 2392,
+          "label": "Sk8 Balls 0-3"
+        },
+        {
+          "t": 2454,
+          "label": "Sk8 Balls 0-4"
+        },
+        {
+          "t": 2680,
+          "label": "3rd Period"
+        },
+        {
+          "t": 3171,
+          "label": "Sk8 Balls 0-5"
+        },
+        {
+          "t": 3261,
+          "label": "UnDucks 1-5 (Bloodgood, Liquori)"
+        }
+      ]
     }
   ],
   "48": [
@@ -177,7 +677,45 @@
     {
       "team": "Sk8Balls",
       "url": "https://www.youtube.com/watch?v=79aWypLezJI",
-      "title": "2026.10.23 Sk8balls vs Mid Ice Crisis"
+      "title": "2026.10.23 Sk8balls vs Mid Ice Crisis",
+      "moments": [
+        {
+          "t": 462,
+          "label": "1:0"
+        },
+        {
+          "t": 951,
+          "label": "1:1"
+        },
+        {
+          "t": 1438,
+          "label": "2:1"
+        },
+        {
+          "t": 1485,
+          "label": "3:1"
+        },
+        {
+          "t": 1571,
+          "label": "3:2"
+        },
+        {
+          "t": 1668,
+          "label": "4:2"
+        },
+        {
+          "t": 2002,
+          "label": "4:3"
+        },
+        {
+          "t": 2347,
+          "label": "4:4"
+        },
+        {
+          "t": 2595,
+          "label": "5:4"
+        }
+      ]
     }
   ],
   "52": [
@@ -189,21 +727,143 @@
     {
       "team": "UnDucks",
       "url": "https://www.youtube.com/watch?v=GDFolBUp6BU",
-      "title": "UnDucks vs Clockwork Orange (10/23/26)"
+      "title": "UnDucks vs Clockwork Orange (10/23/26)",
+      "moments": [
+        {
+          "t": 0,
+          "label": "1st Period"
+        },
+        {
+          "t": 13,
+          "label": "UnDucks 1-0 (Liquori)"
+        },
+        {
+          "t": 1187,
+          "label": "Clockwork Orange 1-1"
+        },
+        {
+          "t": 1351,
+          "label": "2nd Period"
+        },
+        {
+          "t": 1858,
+          "label": "Clockwork Orange 1-2"
+        },
+        {
+          "t": 2674,
+          "label": "3rd Period"
+        },
+        {
+          "t": 2900,
+          "label": "UnDucks 2-2 (Gentile, Antczak, Arolick)"
+        },
+        {
+          "t": 3069,
+          "label": "Clockwork Orange 2-3"
+        }
+      ]
     }
   ],
   "55": [
     {
       "team": "UnDucks",
       "url": "https://www.youtube.com/watch?v=cxB7Zy4k0B4",
-      "title": "UnDucks vs Kodiaks (10/26/26)"
+      "title": "UnDucks vs Kodiaks (10/26/26)",
+      "moments": [
+        {
+          "t": 0,
+          "label": "1st Period"
+        },
+        {
+          "t": 163,
+          "label": "UnDucks 1-0 (Gentile, Gerard, Norman)"
+        },
+        {
+          "t": 604,
+          "label": "UnDucks 2-0 (Bloodgood)"
+        },
+        {
+          "t": 658,
+          "label": "Kodiaks 2-1"
+        },
+        {
+          "t": 795,
+          "label": "UnDucks 3-1 (Bumbernick, Tarantino)"
+        },
+        {
+          "t": 1229,
+          "label": "2nd Period"
+        },
+        {
+          "t": 1323,
+          "label": "Kodiaks 3-2"
+        },
+        {
+          "t": 2621,
+          "label": "3rd Period"
+        },
+        {
+          "t": 2762,
+          "label": "UnDucks 4-2 (Gerard, Gentile, Liquori)"
+        },
+        {
+          "t": 3315,
+          "label": "Kodiaks 4-3"
+        },
+        {
+          "t": 3645,
+          "label": "UnDucks 5-3 (Bumbernick, Arolick)"
+        },
+        {
+          "t": 3918,
+          "label": "6-3 (Gerard, Gentile, Monte)"
+        }
+      ]
     }
   ],
   "56": [
     {
       "team": "Sk8Balls",
       "url": "https://www.youtube.com/watch?v=zvnkOAs58fw",
-      "title": "2026.10.26 Sk8balls vs Yellow Jackets"
+      "title": "2026.10.26 Sk8balls vs Yellow Jackets",
+      "moments": [
+        {
+          "t": 87,
+          "label": "1:0"
+        },
+        {
+          "t": 258,
+          "label": "2:0"
+        },
+        {
+          "t": 336,
+          "label": "2:1"
+        },
+        {
+          "t": 417,
+          "label": "2:2"
+        },
+        {
+          "t": 465,
+          "label": "3:2"
+        },
+        {
+          "t": 965,
+          "label": "4:2"
+        },
+        {
+          "t": 1482,
+          "label": "4:3"
+        },
+        {
+          "t": 2533,
+          "label": "5:3"
+        },
+        {
+          "t": 2639,
+          "label": "6:3"
+        }
+      ]
     }
   ],
   "58": [
@@ -222,7 +882,37 @@
     {
       "team": "UnDucks",
       "url": "https://www.youtube.com/watch?v=_NYv-T7XMMg",
-      "title": "UnDucks vs Black Squadron (10/30/26)"
+      "title": "UnDucks vs Black Squadron (10/30/26)",
+      "moments": [
+        {
+          "t": 0,
+          "label": "1st Period"
+        },
+        {
+          "t": 131,
+          "label": "UnDucks 1-0 (Antczak, Norman, Liquori)"
+        },
+        {
+          "t": 319,
+          "label": "UnDucks 2-0 (Gerard, Tarantino, Bloodgood)"
+        },
+        {
+          "t": 1038,
+          "label": "UnDucks 3-0 (Tarantino, Liquori, Bloodgood)"
+        },
+        {
+          "t": 2051,
+          "label": "UnDucks 4-0 (Bloodgood, Liquori)"
+        },
+        {
+          "t": 2767,
+          "label": "UnDucks 5-0 (Antczak, Gerard)"
+        },
+        {
+          "t": 3693,
+          "label": "Black Squadron 5-1"
+        }
+      ]
     }
   ],
   "61": [
@@ -236,21 +926,111 @@
     {
       "team": "Sk8Balls",
       "url": "https://www.youtube.com/watch?v=Xiq1lOqcyEg",
-      "title": "2026.11.02 Sk8balls vs Green Goombas"
+      "title": "2026.11.02 Sk8balls vs Green Goombas",
+      "moments": [
+        {
+          "t": 30,
+          "label": "0:1"
+        },
+        {
+          "t": 79,
+          "label": "1:1"
+        },
+        {
+          "t": 734,
+          "label": "1:2"
+        },
+        {
+          "t": 1896,
+          "label": "2:2"
+        },
+        {
+          "t": 2642,
+          "label": "3:2"
+        },
+        {
+          "t": 3328,
+          "label": "4:2"
+        }
+      ]
     }
   ],
   "64": [
     {
       "team": "UnDucks",
       "url": "https://www.youtube.com/watch?v=qIzaXeiVT8c",
-      "title": "UnDucks vs Kraken Cold Ones (11/6/26)"
+      "title": "UnDucks vs Kraken Cold Ones (11/6/26)",
+      "moments": [
+        {
+          "t": 0,
+          "label": "1st Period"
+        },
+        {
+          "t": 690,
+          "label": "UnDucks 1-0 (Antczak, Ferrara)"
+        },
+        {
+          "t": 854,
+          "label": "Kraken Cold Ones 1-1"
+        },
+        {
+          "t": 1170,
+          "label": "2nd Period"
+        },
+        {
+          "t": 1239,
+          "label": "No Goal (Ferrara, Roberts)"
+        },
+        {
+          "t": 1409,
+          "label": "UnDucks 2-2 (Ferrara, Antczak, Arolick)"
+        },
+        {
+          "t": 1433,
+          "label": "Kraken Cold Ones 1-2"
+        },
+        {
+          "t": 1514,
+          "label": "UnDucks 3-2 (Antczak, Bumbernick)"
+        },
+        {
+          "t": 1697,
+          "label": "UnDucks 4-2 (Ferrara)"
+        },
+        {
+          "t": 2523,
+          "label": "3rd Period"
+        },
+        {
+          "t": 3568,
+          "label": "UnDucks 5-2 (Bloodgood, Liquori)"
+        },
+        {
+          "t": 3613,
+          "label": "UnDucks 6-2 (Tarantino, Bloodgood)"
+        }
+      ]
     }
   ],
   "65": [
     {
       "team": "Sk8Balls",
       "url": "https://www.youtube.com/watch?v=38SLDyeBfUM",
-      "title": "2026.11.06 Sk8balls vs Mid Ice Crisis"
+      "title": "2026.11.06 Sk8balls vs Mid Ice Crisis",
+      "moments": [
+        {
+          "t": 213,
+          "label": "1:0"
+        },
+        {
+          "t": 430,
+          "label": "2:0"
+        },
+        {
+          "t": 2810,
+          "label": "2:1"
+        }
+      ]
     }
   ],
   "66": [
@@ -258,6 +1038,51 @@
       "team": "Reapers",
       "url": "https://www.youtube.com/watch?v=XkACD-F8V0M",
       "title": "Reapers vs Black Squadron November 6 2026"
+    }
+  ],
+  "69": [
+    {
+      "team": "UnDucks",
+      "url": "https://www.youtube.com/watch?v=m1UBuoks2tc",
+      "title": "UnDucks vs Goombas (11/9/26)",
+      "moments": [
+        {
+          "t": 0,
+          "label": "1st Period"
+        },
+        {
+          "t": 703,
+          "label": "UnDucks 1-0 (Antczak)"
+        },
+        {
+          "t": 1036,
+          "label": "Goombas 1-1"
+        },
+        {
+          "t": 1181,
+          "label": "Goombas 1-2"
+        },
+        {
+          "t": 1365,
+          "label": "2nd Period"
+        },
+        {
+          "t": 2377,
+          "label": "Goombas 1-3"
+        },
+        {
+          "t": 2749,
+          "label": "3rd Period"
+        },
+        {
+          "t": 2914,
+          "label": "Goombas 1-4"
+        },
+        {
+          "t": 3357,
+          "label": "Goombas 1-5"
+        }
+      ]
     }
   ],
   "_comment": "Game videos by game number. Each entry: { \"team\": <whose channel>, \"url\": <video link>, \"title\": <video title> }. Edit freely; \"npm run videos\" only adds new matches."
