@@ -67,7 +67,8 @@ module.exports = {
   blackbear: {
     file: 'data/blackbear.json',
     api: 'https://blackbear-ep-drbwhnh8gtdafucc.a03.azurefd.net',
-    location: 91,
+    // Rinks our games are played at: Jersey Shore Arena, Howell Ice Arena.
+    locations: [91, 86],
     category: 136,
     teamNames: { Ducks: 'UnDucks' },
   },

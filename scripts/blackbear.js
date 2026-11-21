@@ -2,7 +2,7 @@
 //
 //   npm run blackbear       (CI runs this before every build)
 //
-// Asks Black Bear TV's events API for the adult-league games at our rink that
+// Asks Black Bear TV's events API for the adult-league games at our rinks that
 // can be watched now (finished or live), matches them to our games by date and
 // teams, and saves the watch IDs in data/blackbear.json (not committed) for the
 // build. Black Bear TV keeps games for about 30 days, so this list is the
@@ -22,11 +22,11 @@ const { norm } = require('./game-center');
 
 const BB = config.blackbear;
 
-// Every event page by page: [{ id, name: "Away @ Home", event_utc_ts }, ...]
-async function fetchEvents(key) {
+// Every event at one rink, page by page: [{ id, name: "Away @ Home", event_utc_ts }, ...]
+async function fetchEvents(key, location) {
   const events = [];
   for (let offset = 0; ; offset += 100) {
-    const q = new URLSearchParams({ limit: 100, offset, sort_direction: 'desc', location: BB.location, recursively_categories: 1, api_key: key });
+    const q = new URLSearchParams({ limit: 100, offset, sort_direction: 'desc', location, recursively_categories: 1, api_key: key });
     q.append('categories[]', BB.category);
     for (const s of ['finished', 'live']) q.append('stream_status[]', s);
     const res = await fetch(`${BB.api}/api/events?${q}`);
@@ -50,7 +50,8 @@ async function main() {
     return save();
   }
 
-  const events = await fetchEvents(key);
+  const events = [];
+  for (const location of BB.locations) events.push(...(await fetchEvents(key, location)));
   const team = (name) => { const n = norm(name); return norm(BB.teamNames[name] || '') || n; };
   const pair = (a, b) => [team(a), team(b)].sort().join('|');
   const ymd = (ts) => new Date(ts * 1000).toLocaleDateString('en-CA', { timeZone: config.timeZone });
