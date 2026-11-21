@@ -61,6 +61,8 @@ jobs:
           BLACKBEAR_API_KEY: ${{ secrets.BLACKBEAR_API_KEY }}
       - name: Find new game videos (best effort)
         run: npm run videos || echo "Video search failed; using saved game-videos.json"
+        env:
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
       - run: npm run build
       - name: Check for Cloudflare secrets
         id: cf
