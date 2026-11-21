@@ -81,6 +81,24 @@ async function videoDescription(url) {
   return m ? JSON.parse(`"${m[1]}"`) : null;
 }
 
+const videoId = (url) => (/(?:[?&]v=|youtu\.be\/)([\w-]{11})/.exec(url) || [])[1];
+
+// Descriptions by video id from the YouTube Data API (YOUTUBE_API_KEY), 50 per
+// request. YouTube often blocks the watch-page read from cloud servers like
+// GitHub's; the API works from anywhere. The key goes in a header, never a URL,
+// so it can't show up in logs.
+async function apiDescriptions(ids, key) {
+  const out = new Map();
+  for (let i = 0; i < ids.length; i += 50) {
+    const res = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${ids.slice(i, i + 50).join(',')}`, {
+      headers: { 'x-goog-api-key': key },
+    });
+    if (!res.ok) throw new Error(`YouTube Data API: HTTP ${res.status}`);
+    for (const item of (await res.json()).items || []) out.set(item.id, item.snippet.description || '');
+  }
+  return out;
+}
+
 async function channelVideos(url) {
   const videos = new Map();
   for (const tab of ['streams', 'videos']) {
@@ -153,23 +171,34 @@ async function main() {
 
   // Goal timestamps from the descriptions. Re-read every run: teams often add
   // them after uploading. A description that can't be read keeps what's saved.
+  const all = Object.entries(result).filter(([k]) => !k.startsWith('_')).flatMap(([num, list]) => list.map((v) => ({ num, v })));
+  let fromApi = new Map();
+  if (process.env.YOUTUBE_API_KEY) {
+    try {
+      fromApi = await apiDescriptions([...new Set(all.map(({ v }) => videoId(v.url)).filter(Boolean))], process.env.YOUTUBE_API_KEY);
+    } catch (e) {
+      console.warn(`  ${e.message}; reading the video pages instead`);
+    }
+  }
   let withMoments = 0;
-  for (const [num, list] of Object.entries(result)) {
-    if (num.startsWith('_')) continue;
-    for (const v of list) {
-      try {
-        const desc = await videoDescription(v.url);
-        if (desc === null) { console.warn(`  game #${num}: could not read the description of ${v.url}`); continue; }
+  const unread = [];
+  for (const { num, v } of all) {
+    try {
+      const id = videoId(v.url);
+      const desc = fromApi.has(id) ? fromApi.get(id) : await videoDescription(v.url);
+      if (desc === null) unread.push(`#${num}`);
+      else {
         const moments = descriptionMoments(desc);
         if (moments.length) v.moments = moments;
         else delete v.moments;
-      } catch (e) {
-        console.warn(`  game #${num}: ${v.url}: ${e.message}`);
       }
-      if (v.moments) withMoments++;
+    } catch (e) {
+      console.warn(`  game #${num}: ${v.url}: ${e.message}`);
     }
+    if (v.moments) withMoments++;
   }
-  console.log(`${withMoments} video(s) have timestamps in their description.`);
+  if (unread.length) console.warn(`  could not read ${unread.length} description(s), kept their saved timestamps: games ${unread.join(' ')}`);
+  console.log(`${withMoments} video(s) have timestamps in their description (${fromApi.size} read through the YouTube Data API).`);
 
   const ordered = { _comment: result._comment };
   for (const k of Object.keys(result).filter((k) => !k.startsWith('_')).sort((a, b) => a - b)) ordered[k] = result[k];

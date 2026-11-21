@@ -1085,5 +1085,128 @@
       ]
     }
   ],
+  "70": [
+    {
+      "team": "Sk8Balls",
+      "url": "https://www.youtube.com/watch?v=oB-vlXNiJWM",
+      "title": "2026.11.09 Sk8balls vs Kodiaks",
+      "moments": [
+        {
+          "t": 304,
+          "label": "1:0"
+        },
+        {
+          "t": 452,
+          "label": "2:0"
+        },
+        {
+          "t": 720,
+          "label": "3:0"
+        },
+        {
+          "t": 813,
+          "label": "4:0"
+        },
+        {
+          "t": 871,
+          "label": "5:0"
+        },
+        {
+          "t": 2135,
+          "label": "6:0"
+        },
+        {
+          "t": 2464,
+          "label": "7:0"
+        },
+        {
+          "t": 2758,
+          "label": "8:0"
+        }
+      ]
+    }
+  ],
+  "72": [
+    {
+      "team": "Reapers",
+      "url": "https://www.youtube.com/watch?v=Axxrvi57fk4",
+      "title": "Reapers vs Kraken November 13 2026"
+    }
+  ],
+  "73": [
+    {
+      "team": "Clockwork Orange",
+      "url": "https://www.youtube.com/watch?v=b5aU1e7LCtE",
+      "title": "Clockwork Orange vs Mid Ice Crisis 11/13/26"
+    }
+  ],
+  "74": [
+    {
+      "team": "Clockwork Orange",
+      "url": "https://www.youtube.com/watch?v=pcH8D157DHE",
+      "title": "Clockwork Orange vs Yellow Jackets 11/15/26"
+    }
+  ],
+  "77": [
+    {
+      "team": "Sk8Balls",
+      "url": "https://www.youtube.com/watch?v=BXMjXpxCO5o",
+      "title": "2026.11.16 Sk8Balls vs Whalers",
+      "moments": [
+        {
+          "t": 0,
+          "label": "Game Start"
+        },
+        {
+          "t": 90,
+          "label": "Goal - Whalers (1-0) - Ryan Chichester"
+        },
+        {
+          "t": 502,
+          "label": "Goal - Sk8Balls (1-1) - Joe Shammah"
+        },
+        {
+          "t": 693,
+          "label": "Goal - Whalers (2-1) - Drew Zaun"
+        },
+        {
+          "t": 749,
+          "label": "Goal - Whalers (3-1) - Matthew Conde"
+        },
+        {
+          "t": 1896,
+          "label": "Goal - Sk8Balls (3-2) - Jefffrey Truszkowski"
+        },
+        {
+          "t": 2125,
+          "label": "Goal - Sk8Balls (3-3) - John Stabner"
+        },
+        {
+          "t": 2441,
+          "label": "Goal - Sk8Balls (3-4) - Brian Kornfield"
+        },
+        {
+          "t": 2566,
+          "label": "Goal - Sk8Balls (3-5) - Corrigan Lewis"
+        },
+        {
+          "t": 2747,
+          "label": "Goal - Sk8Balls (3-6) - Brian Kornfield"
+        },
+        {
+          "t": 3001,
+          "label": "Goal - Sk8Balls (3-7) - Brian Kornfield"
+        },
+        {
+          "t": 3051,
+          "label": "Goal - Whalers (4-7) - Matthew Conde"
+        },
+        {
+          "t": 3501,
+          "label": "Goal - Whalers (5-7) - Home Unknown Player 3"
+        }
+      ]
+    }
+  ],
   "_comment": "Game videos by game number. Each entry: { \"team\": <whose channel>, \"url\": <video link>, \"title\": <video title> }. Edit freely; \"npm run videos\" only adds new matches."
 }
