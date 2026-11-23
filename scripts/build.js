@@ -457,7 +457,7 @@ ${videoGames().length ? `
   const sections = [...weeks.values()].map((w) => {
     const dates = w.games.map((g) => g.date).filter(Boolean);
     const range = dates.length ? `${MONTHS[dates[0].getUTCMonth()]} ${dates[0].getUTCDate()} – ${MONTHS[dates.at(-1).getUTCMonth()]} ${dates.at(-1).getUTCDate()}` : '';
-    const notes = w.notes.map((n) => `<p class="note">${/schedule updates/i.test(n) ? 'Some games this week were moved — see <a href="#changes">schedule changes</a>.' : esc(n)}</p>`).join('');
+    const notes = w.notes.map((n) => `<p class="note">${/schedule updates/i.test(n) ? 'Some games this week were moved: see <a href="#changes">schedule changes</a>.' : esc(n)}</p>`).join('');
     return `<section class="week" data-week>
   <h2>${w.playoff ? 'Playoffs · ' : ''}Week ${w.week} <small class="muted">${range}</small></h2>${notes}
   ${table(SCHEDULE_COLS, scheduleRows(w.games, r))}
@@ -728,7 +728,7 @@ function ordinal(n) {
   <label>Stats <select data-filter="view">${VIEWS.map(([v, l]) => `<option value="${v}">${l}</option>`).join('')}</select></label>
 </div>
 ${VIEWS.map(([v, l]) => `<section data-view="${v}"><h2 class="view-title">${l}</h2>${viewTable(v)}</section>`).join('')}
-<p class="muted small">Click a column heading to sort. The league records goals only (no assists).</p>`;
+<p class="muted small">Tap or click a column heading to sort. The league records goals only (no assists).</p>`;
   page({ file: 'players.html', title: 'Players', body });
 
   for (const p of list) {
@@ -831,7 +831,7 @@ ${channels ? `<div class="social">${channels}</div>` : ''}
   <label>Team <select data-filter="team"><option value="">All teams</option>${options}</select></label>
 </div>
 ${games.length ? `<div class="video-grid">${games.map((g) => videoCard(g, r)).join('\n')}</div>` : '<p class="muted">No game videos yet.</p>'}
-<p class="muted small">Videos are matched to games automatically from the team YouTube channels. A missing or wrong link can be fixed in <code>game-videos.json</code>.</p>`;
+<p class="muted small">Videos are matched to games automatically from the team YouTube channels, so a few may be missing.</p>`;
   page({ file: 'videos.html', title: 'Videos', body });
 }
 
