@@ -1,0 +1,110 @@
+{
+ "schema": "analytics-v1",
+ "game": {
+  "num": 78,
+  "ttsGameId": 88329,
+  "blackbearId": 110410,
+  "date": "2026-11-20",
+  "away": "Green Goombas",
+  "home": "Sk8Balls",
+  "youtubeUrl": "https://www.youtube.com/watch?v=d3jCy1xt2vg"
+ },
+ "submittedBy": {
+  "team": "Sk8Balls"
+ },
+ "goals": [
+  {
+   "period": 1,
+   "team": "Sk8Balls",
+   "score": "1-0",
+   "videoTime": 833,
+   "scorer": {
+    "name": "Corrigan Lewis",
+    "jersey": "9"
+   },
+   "assist1": {
+    "name": "Matt Liang",
+    "jersey": "42"
+   },
+   "assist2": null,
+   "shot": {
+    "x": 87.1,
+    "y": 5.4
+   },
+   "pass": {
+    "x": 32.3,
+    "y": 9.5
+   },
+   "verified": true
+  },
+  {
+   "period": 1,
+   "team": "Sk8Balls",
+   "score": "2-0",
+   "videoTime": 898,
+   "scorer": {
+    "name": "Jerry Petrolito",
+    "jersey": "28"
+   },
+   "assist1": {
+    "name": "John Stabner",
+    "jersey": "13"
+   },
+   "assist2": null,
+   "shot": {
+    "x": 64.2,
+    "y": -10
+   },
+   "pass": {
+    "x": 27.7,
+    "y": -38.7
+   },
+   "verified": true
+  },
+  {
+   "period": 2,
+   "team": "Sk8Balls",
+   "score": "3-0",
+   "videoTime": 1257,
+   "scorer": {
+    "name": "Brian Kornfield",
+    "jersey": "88"
+   },
+   "assist1": null,
+   "assist2": null,
+   "shot": {
+    "x": 74.3,
+    "y": 9.2
+   },
+   "pass": {
+    "x": 88.5,
+    "y": -15.2
+   },
+   "verified": true
+  },
+  {
+   "period": 3,
+   "team": "Green Goombas",
+   "score": "3-1",
+   "videoTime": 3230,
+   "scorer": {
+    "name": "Renee Fulcher",
+    "jersey": "3"
+   },
+   "assist1": {
+    "name": "Ryan Fulcher",
+    "jersey": "18"
+   },
+   "assist2": null,
+   "shot": {
+    "x": 81.6,
+    "y": 3.6
+   },
+   "pass": {
+    "x": 48.6,
+    "y": -2.5
+   },
+   "verified": true
+  }
+ ]
+}
