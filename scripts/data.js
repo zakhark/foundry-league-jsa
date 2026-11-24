@@ -733,4 +733,4 @@ function build(d) {
   };
 }
 
-module.exports = { load, loadArchive, freeze, seasonDir, archiveFile, slugify, makePlayerMatcher, isYouTube };
+module.exports = { load, loadArchive, freeze, seasonDir, archiveFile, slugify, makePlayerMatcher, isYouTube, realGoals };

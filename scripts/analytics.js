@@ -24,18 +24,20 @@ const person = (p) => (p && typeof p.name === 'string' && p.name.trim() ? { name
 // file can't be used, else the game, the submitter's slug, the usable goals and
 // notes about goals that were dropped.
 function checkFile({ file, json, gameByNum, ttsByNum, canonTeam }) {
-  const { slugify, isYouTube } = data();
+  const { slugify, isYouTube, realGoals } = data();
+  // Anything that isn't text is no team at all (and must never crash the build).
+  const teamOf = (v) => (typeof v === 'string' ? canonTeam(v) : '');
   const name = parseFileName(file);
   if (!name) return { skip: 'the name must be <game #>-<team or league>.json' };
   if (!json || json.schema !== SCHEMA) return { skip: `schema is "${json && json.schema}", the site reads ${SCHEMA}` };
   const info = json.game || {};
   if (Number(info.num) !== name.num) return { skip: `game.num is ${info.num}, but the file name says ${name.num}` };
   const by = String((json.submittedBy && json.submittedBy.team) || '');
-  const bySlug = by.toLowerCase() === 'league' ? 'league' : slugify(canonTeam(by));
+  const bySlug = by.toLowerCase() === 'league' ? 'league' : slugify(teamOf(by));
   if (bySlug !== name.slug) return { skip: `submittedBy.team "${by}" doesn't match "${name.slug}" in the file name` };
   const game = gameByNum.get(name.num);
   if (!game) return { skip: `there's no game #${name.num}` };
-  if (info.date !== isoDate(game.date) || canonTeam(info.away) !== game.away || canonTeam(info.home) !== game.home) {
+  if (info.date !== isoDate(game.date) || teamOf(info.away) !== game.away || teamOf(info.home) !== game.home) {
     return { skip: `it's for ${info.away} at ${info.home} on ${info.date}, but game #${game.num} is ${game.away} at ${game.home} on ${isoDate(game.date)}` };
   }
   const tts = ttsByNum.get(game.num);
@@ -55,12 +57,15 @@ function checkFile({ file, json, gameByNum, ttsByNum, canonTeam }) {
     if (!g || g.verified !== true) continue;
     const label = `goal ${g.score}`;
     const period = String(g.period);
-    const team = canonTeam(g.team);
+    const team = teamOf(g.team);
     const score = /^(\d+)-(\d+)$/.exec(String(g.score));
+    const final = { home: realGoals(game, 'home'), away: realGoals(game, 'away') }; // shootout excluded
     let problem = '';
     if (!PERIODS.has(period)) problem = `period "${g.period}" isn't 1, 2, 3 or OT`;
     else if (team !== game.home && team !== game.away) problem = `team "${g.team}" isn't in this game`;
     else if (!score) problem = 'the score isn\'t "<home>-<away>"';
+    else if (Number(score[1]) > final.home || Number(score[2]) > final.away) problem = `the score is past the game's final ${final.home}-${final.away}`;
+    else if (Number(score[team === game.home ? 1 : 2]) === 0) problem = `the score gives ${team} no goal`;
     else if (!inRange(g.shot, true) || !inRange(g.pass, false)) problem = 'a shot or pass position is off the rink';
     else if (seen.has(g.score)) problem = 'another goal in this file has the same score';
     if (problem) {
@@ -126,7 +131,9 @@ function correctEvents({ events, games, picked, canonPlayer, isRoster, warn, rea
     for (const side of ['home', 'away']) {
       const team = g[side];
       const mine = goals.filter((x) => x.team === team);
-      if (mine.length !== realGoals(g, side) || mine.some((x) => !x.scorer || !x.scorer.player)) continue;
+      // Complete only if this team's own tallies run 1, 2, …, n: every goal, each once.
+      const tallies = mine.map((x) => x[side]).sort((x, y) => x - y);
+      if (mine.length !== realGoals(g, side) || tallies.some((t, i) => t !== i + 1) || mine.some((x) => !x.scorer || !x.scorer.player)) continue;
       const count = (list) => list.reduce((m, [p, q]) => m.set(p, (m.get(p) || 0) + q), new Map());
       const sheet = count(events.filter((e) => e.game === g.num && e.team === team && e.type === 'Goal').map((e) => [e.player, e.qty]));
       const video = count(mine.map((x) => [x.scorer.player, 1]));

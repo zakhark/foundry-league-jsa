@@ -204,3 +204,31 @@ test("the published analytics schema's example passes the site's checks", () => 
   assert.deepStrictEqual(r.notes, []);
   assert.equal(r.goals.length, ex.goals.filter((g) => g.verified).length);
 });
+
+// ---------- Review fixes (PR #18) ----------
+test('drops goals whose score is impossible for the game', () => {
+  const byNum = new Map([[77, { ...game77, homeScore: 2, awayScore: 1, winner: 'Whalers' }]]);
+  const r = checkFile({ file: '77-sk8balls.json', json: file({}, [
+    goal({ score: '8-0' }), // more than Whalers' 2
+    goal({ score: '0-1', team: 'Whalers' }), // the scoring team's own tally is 0
+    goal({ score: '1-0' }),
+  ]), gameByNum: byNum, ttsByNum, canonTeam });
+  assert.deepStrictEqual(r.goals.map((g) => `${g.home}-${g.away}`), ['1-0']);
+  assert.equal(r.notes.length, 2);
+});
+
+test("a team isn't complete unless its tallies run 1..n", () => {
+  const notes = [];
+  // Whalers scored 2; the video has two Whalers goals but both claim the 1st Whalers goal.
+  const goals = [G('Whalers', 1, 0, 'Ann Ace'), G('Whalers', 1, 1, 'Bob Bolt')];
+  const out = correctEvents({ events: [ev('Whalers', 'Cy Cole', 2)], games: [played()], picked: new Map([[77, goals]]), canonPlayer, isRoster: (n) => roster.has(n), warn: (m) => notes.push(m), realGoals });
+  assert.deepStrictEqual(out.map((e) => [e.player, e.qty]), [['Cy Cole', 2]]);
+});
+
+test('team fields that are not text skip the file instead of crashing', () => {
+  const strictCanon = (n) => (n ? String(n.toLowerCase()) && n : '');
+  for (const bad of [file({ game: { away: {} } }), file({ submittedBy: { team: 5 } }), file({}, [goal({ team: 123 })])]) {
+    const r = checkFile({ file: '77-sk8balls.json', json: bad, gameByNum, ttsByNum, canonTeam: strictCanon });
+    assert.ok(r.skip || r.goals.length === 0);
+  }
+});
