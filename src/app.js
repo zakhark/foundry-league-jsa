@@ -76,6 +76,16 @@
       iframe.referrerPolicy = 'strict-origin-when-cross-origin'; // YouTube refuses embeds without a referrer
       frame.replaceChildren(iframe);
     };
+    // Marks a camera as the current one (its button, its moments, "Open on YouTube").
+    const setCamera = (videoId) => {
+      const angle = [...box.querySelectorAll('.angle')].find((a) => a.dataset.id === videoId);
+      if (!angle) return;
+      box.querySelectorAll('.angle').forEach((a) => a.setAttribute('aria-pressed', String(a === angle)));
+      box.querySelectorAll('.moments').forEach((l) => { l.hidden = l.dataset.for !== videoId; });
+      if (open) open.href = angle.href;
+    };
+    box.play = play; // used by the goal map below
+    box.setCamera = setCamera;
     box.addEventListener('click', (e) => {
       const facade = e.target.closest('.facade');
       const angle = e.target.closest('.angle');
@@ -89,9 +99,7 @@
         frame.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
       } else if (angle) {
         e.preventDefault();
-        box.querySelectorAll('.angle').forEach((a) => a.setAttribute('aria-pressed', String(a === angle)));
-        box.querySelectorAll('.moments').forEach((l) => { l.hidden = l.dataset.for !== angle.dataset.id; });
-        if (open) open.href = angle.href;
+        setCamera(angle.dataset.id);
         const f = frame.querySelector('.facade');
         if (f) { // not playing yet: just show the other camera's thumbnail
           f.dataset.id = angle.dataset.id;
@@ -100,6 +108,85 @@
         } else play(angle.dataset.id);
       }
     });
+  });
+
+  // Goal map (game pages): filters (team, period), toggles (heatmap, pass
+  // lines, jersey numbers), a dot or row tap highlights both, and ▶ jumps the
+  // video player above to that goal.
+  document.querySelectorAll('[data-goalmap]').forEach((map) => {
+    const player = document.querySelector('[data-player]');
+    const canvas = map.querySelector('.gm-heat');
+    const controls = map.querySelector('.gm-controls');
+    if (controls) controls.hidden = false;
+    const filter = { team: 'all', period: 'all' };
+    const items = (i) => map.querySelectorAll(`.gm-goal[data-i="${i}"], .gm-list li[data-i="${i}"]`);
+    const highlight = (i) => {
+      const wasOn = items(i)[0] && items(i)[0].classList.contains('on');
+      map.querySelectorAll('.on').forEach((el) => el.classList.remove('on'));
+      if (!wasOn) items(i).forEach((el) => el.classList.add('on'));
+    };
+    // Heatmap: a Gaussian blob per visible goal, summed and coloured
+    // transparent → blue → cyan → yellow → orange → red. Rink feet → canvas pixels.
+    const STOPS = [[0.04, 37, 99, 235, 0], [0.25, 37, 99, 235, 115], [0.45, 6, 182, 212, 165], [0.65, 250, 204, 21, 195], [0.85, 249, 115, 22, 220], [1, 220, 38, 38, 240]];
+    const colour = (t) => {
+      if (t <= STOPS[0][0]) return [0, 0, 0, 0];
+      for (let i = 1; i < STOPS.length; i++) {
+        if (t <= STOPS[i][0]) {
+          const a = STOPS[i - 1], b = STOPS[i], f = (t - a[0]) / (b[0] - a[0]);
+          return [1, 2, 3, 4].map((k) => Math.round(a[k] + f * (b[k] - a[k])));
+        }
+      }
+      return STOPS[STOPS.length - 1].slice(1);
+    };
+    const drawHeat = () => {
+      if (!canvas || !canvas.getContext) return;
+      const W = canvas.width, H = canvas.height, scale = W / 200, sigma = 11 * scale, two = 2 * sigma * sigma, rad = Math.ceil(sigma * 2.8);
+      const density = new Float32Array(W * H);
+      map.querySelectorAll('.gm-goal:not([hidden])').forEach((g) => {
+        const gx = (Number(g.dataset.x) + 100) * scale, gy = (Number(g.dataset.y) + 42.5) * scale;
+        for (let y = Math.max(0, Math.floor(gy - rad)); y <= Math.min(H - 1, Math.ceil(gy + rad)); y++) {
+          for (let x = Math.max(0, Math.floor(gx - rad)); x <= Math.min(W - 1, Math.ceil(gx + rad)); x++) {
+            density[y * W + x] += Math.exp(-((x - gx) ** 2 + (y - gy) ** 2) / two);
+          }
+        }
+      });
+      const max = density.reduce((m, v) => (v > m ? v : m), 0);
+      const ctx = canvas.getContext('2d');
+      const img = ctx.createImageData(W, H);
+      if (max > 0) density.forEach((v, i) => img.data.set(colour(v / max), i * 4));
+      ctx.putImageData(img, 0, 0);
+    };
+    const apply = () => {
+      // An attribute, not el.hidden: the dots are SVG elements, which have no .hidden property.
+      map.querySelectorAll('.gm-goal, .gm-list li').forEach((el) => el.toggleAttribute('hidden',
+        (filter.team !== 'all' && el.dataset.team !== filter.team) || (filter.period !== 'all' && el.dataset.period !== filter.period)));
+      drawHeat();
+    };
+    map.addEventListener('click', (e) => {
+      const seek = e.target.closest('a[data-seek]');
+      const button = e.target.closest('.gm-seg button');
+      const item = e.target.closest('.gm-goal, .gm-list li');
+      if (seek && player && player.play) {
+        e.preventDefault();
+        player.setCamera(seek.dataset.id);
+        player.play(seek.dataset.id, Number(seek.dataset.t));
+        player.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      } else if (button) {
+        const key = 'teamFilter' in button.dataset ? 'teamFilter' : 'period';
+        filter[key === 'teamFilter' ? 'team' : 'period'] = button.dataset[key];
+        button.parentElement.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b === button)));
+        apply();
+      } else if (item && !e.target.closest('a')) highlight(item.dataset.i);
+    });
+    map.addEventListener('change', (e) => {
+      const t = e.target.dataset && e.target.dataset.toggle;
+      if (t) map.classList.toggle(`no-${t}`, !e.target.checked);
+    });
+    map.addEventListener('keydown', (e) => {
+      const dot = e.target.closest('.gm-goal');
+      if (dot && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); highlight(dot.dataset.i); }
+    });
+    apply();
   });
 
   // Rows that open a page when clicked anywhere (schedule rows open the game).

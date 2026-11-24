@@ -99,6 +99,19 @@ Other static hosts, such as Netlify, can also build the site themselves: build c
     - `benchAppNames`: team names to use in the BenchApp files and calendars when BenchApp spells them differently from the sheet. BenchApp matches teams by exact name. Empty by default; for a name change everywhere, use `teamRenames` instead.
     - `siteUrl`: used for links inside events; it can also be set with `SITE_URL`.
 
+## Game analytics from tagged video
+
+The league's video tool (a separate project) lets someone step through a game video and confirm each goal: scorer, assists, where the shot and the pass came from. Its export is a small JSON file the site reads.
+
+- **Formats.** The site publishes them as versioned JSON Schemas: `formats/analytics-v1.schema.json` for the files and `formats/games-v1.schema.json` for `games.json`. `games.json` maps our game numbers to the rink's (TimeToScore) and Black Bear TV's ids, so the tool can name files by our game number. Adding an optional field keeps v1; anything that would break existing files is a new version, and the site keeps reading the old one.
+- **Adding a file.** Put it in `seasons/<n>/analytics/<game #>-<team>.json` (e.g. `77-sk8balls.json`, or `77-league.json` for the league's own tagging) and open a pull request like any other change.
+- **What's checked.** The whole file is skipped, with a data note, if its game number, submitting team, date, teams or rink id don't match that game, or if the game has no score in the sheet yet. Only goals marked `verified: true` are used.
+- **What the site does with it.**
+  - Game pages get a goal map: a full rink with each team's goals at the net it attacks, a heatmap, pass lines and jersey numbers, filters by team and period, and ▶ links that start the video 5 seconds before each goal.
+  - Player pages show assists, but only next to how many of their games were tagged; there's no league-wide assists column.
+  - When the video has every goal a team scored in a game, with roster names, its scorers replace the sheet's for that team and game. The goals are marked "✓ video" and every changed count is listed in the data notes. Otherwise the sheet's numbers stay.
+  - Names are matched to rosters the same way as the sheet's (nicknames, initials such as "JP" for "John").
+
 ## Seasons
 
 Each season has its own folder, `seasons/<n>/` (e.g. `seasons/15/`). It holds that season's game videos and rink game-center links, which are tied to game numbers that restart every season. The current season number comes from the workbook's `S## Rosters` tab. Team logos and team links are shared by all seasons.

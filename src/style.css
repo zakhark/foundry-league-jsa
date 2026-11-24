@@ -272,3 +272,44 @@ table.pin-1 tbody tr:hover > :nth-child(1), table.pin-2 tbody tr:hover > :nth-ch
   *, *::before, *::after { transition: none !important; }
   .vid:hover, .video-card .thumb:hover .play, .player .facade:hover .play { transform: none; }
 }
+
+/* Goal map from tagged video (game pages) */
+.goalmap { margin: 18px 0 6px; }
+.goalmap h2 { margin-bottom: 8px; }
+.gm-controls { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; margin-bottom: 10px; }
+.gm-controls[hidden] { display: none; }
+.gm-seg { display: inline-flex; flex-wrap: wrap; gap: 4px; }
+.gm-seg button { font: inherit; font-size: .85rem; padding: 4px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--text); cursor: pointer; }
+.gm-seg button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+.gm-toggles { display: inline-flex; flex-wrap: wrap; gap: 4px 12px; font-size: .85rem; }
+.gm-toggles label { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
+/* The rink: ice, then the heatmap canvas, then the lines and dots. The corner
+   radius matches the boards (28 ft on a 200 x 85 ft rink). */
+.gm-ice { position: relative; aspect-ratio: 200 / 85; max-width: 900px; background: var(--surface); border-radius: 14% / 33%; overflow: hidden; }
+.gm-heat { position: absolute; inset: 0; width: 100%; height: 100%; }
+.gm-rink { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.gm-rink .boards { fill: none; stroke: var(--muted); stroke-width: .9; }
+.gm-rink .red { stroke: #dc2626; stroke-width: .45; opacity: .65; }
+.gm-rink .red.centre { stroke-width: .9; stroke-dasharray: 1.6 1.2; }
+.gm-rink .blue { stroke: #2563eb; stroke-width: .9; opacity: .65; }
+.gm-rink .blue-c { fill: none; stroke: #2563eb; stroke-width: .4; opacity: .6; }
+.gm-rink .blue-d { fill: #2563eb; opacity: .7; }
+.gm-rink .circle { fill: none; stroke: #dc2626; stroke-width: .4; opacity: .55; }
+.gm-rink .dot { fill: #dc2626; opacity: .7; }
+.gm-rink .crease { fill: rgba(56, 189, 248, .35); stroke: #dc2626; stroke-width: .4; }
+.gm-rink .net { fill: rgba(220, 38, 38, .12); stroke: var(--muted); stroke-width: .5; }
+.gm-rink .gm-end { font-size: 3.1px; font-weight: 700; fill: var(--muted); }
+.gm-goal { cursor: pointer; outline: none; }
+.gm-pin { stroke: #fff; stroke-width: .65; }
+.gm-jn { font-size: 2.5px; font-weight: 700; fill: #fff; pointer-events: none; }
+.gm-pass line { stroke-width: .55; stroke-dasharray: 1.5 1; opacity: .85; }
+.gm-pass circle { opacity: .7; }
+.gm-goal.on .gm-pin, .gm-goal:focus-visible .gm-pin { stroke: var(--text); stroke-width: 1.1; }
+.goalmap.no-pass .gm-pass, .goalmap.no-jn .gm-jn, .goalmap.no-heat .gm-heat { display: none; }
+.gm-goal[hidden], .gm-list li[hidden] { display: none; }
+.gm-list { list-style: none; margin: 10px 0 0; padding: 0; font-size: .9rem; columns: 2 320px; column-gap: 20px; }
+.gm-list li { padding: 6px 8px; border-bottom: 1px solid var(--line); cursor: pointer; border-radius: 6px; break-inside: avoid; }
+.gm-list li.on { background: color-mix(in srgb, var(--accent) 14%, transparent); }
+.gm-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+.gm-seek { white-space: nowrap; font-size: .85rem; margin-left: 4px; }
+.vv { color: var(--win); font-size: .75rem; margin-left: 6px; white-space: nowrap; }

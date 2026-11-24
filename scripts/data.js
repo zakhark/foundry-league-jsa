@@ -8,6 +8,7 @@ const fs = require('fs');
 const path = require('path');
 const XLSX = require('xlsx');
 const config = require('./config');
+const { checkFile, pickGoals, correctEvents } = require('./analytics');
 
 const LINKS_FILE = 'team-links.json';
 const SEASONS_DIR = 'seasons';
@@ -91,6 +92,46 @@ function slugify(s) {
   );
 }
 
+// ---------- Player name matching ----------
+// The game sheets sometimes use a short form of a rostered name
+// ("Matt Angarone" vs "Matthew Angarone"). Map those to the roster name.
+const parts = (n) => {
+  const w = n.toLowerCase().split(' ');
+  return { first: w[0], last: w.slice(1).join(' ') };
+};
+const NICK = {
+  mike: 'michael', mikey: 'michael', bob: 'robert', bobby: 'robert', rob: 'robert', bill: 'william',
+  will: 'william', jim: 'james', jimmy: 'james', tony: 'anthony', dick: 'richard', rick: 'richard',
+  bert: 'albert', ted: 'edward', ed: 'edward', eddie: 'edward', jack: 'john', johnny: 'john',
+  peggy: 'margaret', liz: 'elizabeth', beth: 'elizabeth', kate: 'katherine', kathy: 'katherine',
+};
+const firstKey = (f) => (NICK[f] || f).slice(0, 3);
+// A first name of one or two letters is taken as initials: "JP Stabner" is "John Stabner".
+const initials = (a, b) => a.length > 0 && a.length <= 2 && b.startsWith(a[0]);
+const similar = (a, b) => {
+  const x = parts(a), y = parts(b);
+  return x.last && x.last === y.last &&
+    (firstKey(x.first) === firstKey(y.first) || initials(x.first, y.first) || initials(y.first, x.first));
+};
+function makePlayerMatcher(roster, warn) {
+  const aliasCache = new Map();
+  return (name, teamName) => {
+    if (!name) return name;
+    const key = `${name.toLowerCase()}|${teamName || ''}`;
+    if (aliasCache.has(key)) return aliasCache.get(key);
+    let found = roster.find((r) => r.name.toLowerCase() === name.toLowerCase());
+    if (!found) found = roster.find((r) => r.team === teamName && similar(r.name, name));
+    if (!found) {
+      const any = [...new Set(roster.filter((r) => similar(r.name, name)).map((r) => r.name))];
+      if (any.length === 1) found = { name: any[0] };
+    }
+    const result = found ? found.name : name;
+    if (result !== name) warn(`Treating "${name}" as roster player "${result}"`);
+    aliasCache.set(key, result);
+    return result;
+  };
+}
+
 function parseWorkbook(file) {
   const wb = XLSX.readFile(file, { cellStyles: false });
 
@@ -123,40 +164,7 @@ function parseWorkbook(file) {
     });
   }
 
-  // ---------- Player name matching ----------
-  // The game sheets sometimes use a short form of a rostered name
-  // ("Matt Angarone" vs "Matthew Angarone"). Map those to the roster name.
-  const parts = (n) => {
-    const w = n.toLowerCase().split(' ');
-    return { first: w[0], last: w.slice(1).join(' ') };
-  };
-  const NICK = {
-    mike: 'michael', mikey: 'michael', bob: 'robert', bobby: 'robert', rob: 'robert', bill: 'william',
-    will: 'william', jim: 'james', jimmy: 'james', tony: 'anthony', dick: 'richard', rick: 'richard',
-    bert: 'albert', ted: 'edward', ed: 'edward', eddie: 'edward', jack: 'john', johnny: 'john',
-    peggy: 'margaret', liz: 'elizabeth', beth: 'elizabeth', kate: 'katherine', kathy: 'katherine',
-  };
-  const firstKey = (f) => (NICK[f] || f).slice(0, 3);
-  const similar = (a, b) => {
-    const x = parts(a), y = parts(b);
-    return x.last && x.last === y.last && firstKey(x.first) === firstKey(y.first);
-  };
-  const aliasCache = new Map();
-  const canonPlayer = (name, teamName) => {
-    if (!name) return name;
-    const key = `${name.toLowerCase()}|${teamName || ''}`;
-    if (aliasCache.has(key)) return aliasCache.get(key);
-    let found = roster.find((r) => r.name.toLowerCase() === name.toLowerCase());
-    if (!found) found = roster.find((r) => r.team === teamName && similar(r.name, name));
-    if (!found) {
-      const any = [...new Set(roster.filter((r) => similar(r.name, name)).map((r) => r.name))];
-      if (any.length === 1) found = { name: any[0] };
-    }
-    const result = found ? found.name : name;
-    if (result !== name) warn(`Treating "${name}" as roster player "${result}"`);
-    aliasCache.set(key, result);
-    return result;
-  };
+  const canonPlayer = makePlayerMatcher(roster, warn);
 
   // ---------- Schedule ----------
   const sched = getSheet(wb, SHEETS.schedule);
@@ -408,7 +416,10 @@ function assemble(raw) {
   if (String(bb.season) === String(season)) {
     for (const [num, id] of Object.entries(bb.games || {})) {
       const g = gameByNum.get(Number(num));
-      if (g && Number.isInteger(id) && id > 0) g.blackbear = `https://blackbearsports.tv/watch/${id}`;
+      if (g && Number.isInteger(id) && id > 0) {
+        g.blackbear = `https://blackbearsports.tv/watch/${id}`;
+        g.blackbearId = id;
+      }
     }
   }
 
@@ -425,6 +436,7 @@ function assemble(raw) {
     for (const [num, id] of Object.entries(gc.games || {})) {
       const g = gameByNum.get(Number(num));
       if (!g) { warn(`${GAME_CENTER_FILE}: no game #${num}`); continue; }
+      g.ttsId = Number(id);
       g.gameCenter = {
         url: `${gc.site}/game-center-widget/?game=${id}&${q}`,
         scoresheet: `https://stats.blackbear.timetoscore.com/generate-scorecard.php?game_id=${id}`,
@@ -435,7 +447,33 @@ function assemble(raw) {
     }
   }
 
-  return build({ season, roster, games, scheduleNotes, events, subs, scheduleUpdates, teamLinks, gameCenterTeams });
+  // ---------- Goal analytics from tagged video (optional; see scripts/analytics.js) ----------
+  const ANALYTICS_DIR = path.join(seasonDir(season), 'analytics');
+  let allEvents = events;
+  if (fs.existsSync(ANALYTICS_DIR)) {
+    const ttsByNum = new Map(games.filter((g) => g.ttsId).map((g) => [g.num, g.ttsId]));
+    const byGame = new Map();
+    for (const file of fs.readdirSync(ANALYTICS_DIR).filter((f) => f.endsWith('.json')).sort()) {
+      const where = path.join(ANALYTICS_DIR, file);
+      let json;
+      try { json = JSON.parse(fs.readFileSync(where, 'utf8')); } catch (e) { warn(`${where}: skipped, not valid JSON (${e.message})`); continue; }
+      const r = checkFile({ file, json, gameByNum, ttsByNum, canonTeam });
+      if (r.skip) { warn(`${where}: skipped, ${r.skip}`); continue; }
+      r.notes.forEach((n) => warn(`${where}: ${n}`));
+      if (!byGame.has(r.game.num)) byGame.set(r.game.num, []);
+      byGame.get(r.game.num).push(r);
+    }
+    const picked = new Map([...byGame].map(([num, entries]) => [num, pickGoals(gameByNum.get(num), entries)]));
+    const rosterNames = new Set(roster.map((r) => r.name.toLowerCase()));
+    allEvents = correctEvents({
+      events, games, picked, warn, realGoals,
+      canonPlayer: makePlayerMatcher(roster, warn),
+      isRoster: (n) => rosterNames.has(String(n).toLowerCase()),
+    });
+    for (const [num, goals] of picked) if (goals.length) gameByNum.get(num).analytics = { goals };
+  }
+
+  return build({ season, roster, games, scheduleNotes, events: allEvents, subs, scheduleUpdates, teamLinks, gameCenterTeams });
 }
 
 // Live season: read the workbook.
@@ -467,6 +505,13 @@ function loadArchive(season) {
   return assemble(raw);
 }
 
+// In a shootout the winner's final score includes one extra "goal" for the
+// shootout win. Like the spreadsheet, that goal doesn't count toward GF/GA.
+const realGoals = (g, side) => {
+  const s = side === 'home' ? g.homeScore : g.awayScore;
+  return g.so && g.winner === g[side] ? s - 1 : s;
+};
+
 // ---------- Derived stats ----------
 function build(d) {
   const P = config.points;
@@ -490,12 +535,6 @@ function build(d) {
   d.roster.forEach((p) => team(p.team).roster.push(p));
   d.games.filter((g) => !g.tbd).forEach((g) => { team(g.home); team(g.away); });
 
-  // In a shootout the winner's final score includes one extra "goal" for the
-  // shootout win. Like the spreadsheet, that goal doesn't count toward GF/GA.
-  const realGoals = (g, side) => {
-    const s = side === 'home' ? g.homeScore : g.awayScore;
-    return g.so && g.winner === g[side] ? s - 1 : s;
-  };
   const other = (side) => (side === 'home' ? 'away' : 'home');
 
   const record = (rec, res) => { rec[res === 'OTL' ? 'otl' : res.toLowerCase()]++; };
@@ -553,6 +592,7 @@ function build(d) {
       players.set(key, {
         name, slug: slugify(name), team: '', teams: [], number: '', position: '', captain: '',
         goals: 0, soGoals: 0, pim: 0, penalties: 0, teamGoals: 0, teamGoalPct: null,
+        assists: 0, taggedGames: [], videoGoals: false, // from tagged video (scripts/analytics.js)
         stats: { team: blankStats(), sub: blankStats(), total: blankStats() }, // filled in below
         log: new Map(), // game num -> { team, goals, soGoals, pim, penalties: [] }
       });
@@ -573,6 +613,7 @@ function build(d) {
   for (const e of d.events) {
     const p = player(e.player);
     const entry = logFor(p, e.game, e.team);
+    if (e.video) entry.video = true;
     if (e.type === 'Goal') { p.goals += e.qty; entry.goals += e.qty; }
     else if (e.type === 'SO Goal') { p.soGoals += e.qty; entry.soGoals += e.qty; }
     else if (e.type === 'Penalty') {
@@ -586,6 +627,27 @@ function build(d) {
     const p = player(s.player);
     logFor(p, s.game, s.team).sub = true;
   }
+  // Assists from tagged video only, shown next to the games that were tagged.
+  for (const g of d.games) {
+    if (!g.analytics) continue;
+    const inGame = new Set();
+    for (const goal of g.analytics.goals) {
+      if (goal.scorer && goal.scorer.player) inGame.add(goal.scorer.player.toLowerCase());
+      for (const a of goal.assists) {
+        if (!a.player) continue;
+        player(a.player).assists++;
+        inGame.add(a.player.toLowerCase());
+      }
+    }
+    for (const p of players.values()) {
+      if (inGame.has(p.name.toLowerCase()) || p.teams.includes(g.home) || p.teams.includes(g.away)) p.taggedGames.push(g.num);
+    }
+  }
+  for (const p of players.values()) {
+    p.taggedGames.sort((a, b) => a - b);
+    p.videoGoals = [...p.log.values()].some((e) => e.video);
+  }
+
   // Split each player's stats: games for their own roster team(s), games as a
   // sub (sub list, or any other team), and the total. Games played aren't
   // known for team games (the sheet doesn't record attendance), only for subs.
@@ -671,4 +733,4 @@ function build(d) {
   };
 }
 
-module.exports = { load, loadArchive, freeze, seasonDir, archiveFile, slugify };
+module.exports = { load, loadArchive, freeze, seasonDir, archiveFile, slugify, makePlayerMatcher, isYouTube };

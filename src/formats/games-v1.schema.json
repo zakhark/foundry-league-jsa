@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Foundry Adult Hockey League game list, version 1 (games-v1)",
+  "description": "Published by the league site at games.json for the current season. Maps the league's game numbers to the rink's and Black Bear TV's ids, so tools can name analytics files by game number (see analytics-v1.schema.json). Versioning: adding a field keeps v1; renaming, removing or changing the meaning of a field is a new version with a new schema file.",
+  "type": "object",
+  "required": ["schema", "season", "games"],
+  "properties": {
+    "schema": { "const": "games-v1" },
+    "season": { "type": "integer", "description": "Season number. Analytics files go in seasons/<season>/analytics/ in the site's repository." },
+    "games": {
+      "type": "array",
+      "description": "Every scheduled game whose teams are known, sorted by num.",
+      "items": {
+        "type": "object",
+        "required": ["num", "date", "away", "home", "ttsGameId", "blackbearId"],
+        "properties": {
+          "num": { "type": "integer", "description": "Game number; restarts every season." },
+          "date": { "type": ["string", "null"], "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
+          "away": { "type": "string", "description": "Team names as the site spells them." },
+          "home": { "type": "string" },
+          "ttsGameId": { "type": ["integer", "null"], "description": "TimeToScore game_id. Known for every game linked to the rink; doesn't expire. Look games up by this first." },
+          "blackbearId": { "type": ["integer", "null"], "description": "Black Bear TV event id, only while Black Bear TV lists the game (about 30 days), otherwise null." }
+        }
+      }
+    }
+  },
+  "examples": [
+    { "schema": "games-v1", "season": 15, "games": [{ "num": 77, "date": "2026-11-16", "away": "Sk8Balls", "home": "Whalers", "ttsGameId": 88328, "blackbearId": 110413 }] }
+  ]
+}
