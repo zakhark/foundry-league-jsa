@@ -186,7 +186,6 @@ ${vids.filter((v) => v.moments.length).map((v) => `  <ol class="moments" data-fo
 // the heatmap and the filters (team, period, toggles) and seeks the video above.
 // The files store every shot attacking the +x net (feet, centre ice at 0,0), so
 // the away team's shots are turned around to the left end.
-const VV_MARK = '<small class="vv" title="Corrected from the game video">✓ video</small>';
 const GOAL_LEAD_SECONDS = 5;
 function goalMap(g, r) {
   if (!g.analytics) return '';
@@ -227,12 +226,12 @@ ${[-20, 20].flatMap((x) => [-22, 22].map((y) => `<circle class="dot" cx="${x}" c
   }).join('');
   const periods = ['1', '2', '3', 'OT'].filter((p) => goals.some((x) => x.period === p));
   const seg = (attr, items, label) => `<div class="gm-seg" role="group" aria-label="${label}">${items.map(([v, text], i) => `<button type="button" ${attr}="${v}" aria-pressed="${i === 0}">${text}</button>`).join('')}</div>`;
-  return `<section class="goalmap" data-goalmap>
+  return `<section class="goalmap no-pass" data-goalmap>
 <h2>Goal map</h2>
 <div class="gm-controls" hidden>
 ${seg('data-team-filter', [['all', 'Both teams'], ['away', esc(g.away)], ['home', esc(g.home)]], 'Team')}
 ${seg('data-period', [['all', 'All periods'], ...periods.map((p) => [p, p === 'OT' ? 'OT' : `P${p}`])], 'Period')}
-<span class="gm-toggles">${[['heat', 'Heatmap'], ['pass', 'Pass lines'], ['jn', 'Jersey #s']].map(([t, l]) => `<label><input type="checkbox" data-toggle="${t}" checked> ${l}</label>`).join('')}</span>
+<span class="gm-toggles">${[['heat', 'Heatmap'], ['pass', 'Pass lines'], ['jn', 'Jersey #s']].map(([t, l]) => `<label><input type="checkbox" data-toggle="${t}"${t === 'pass' ? '' : ' checked'}> ${l}</label>`).join('')}</span>
 </div>
 <div class="gm-ice"><canvas class="gm-heat" width="400" height="170" aria-hidden="true"></canvas>
 <svg class="gm-rink" viewBox="-100 -42.5 200 85" role="img" aria-label="Rink with a dot where each goal was shot from">${rink}${marks}</svg></div>
@@ -593,7 +592,7 @@ ${linkOnly.length || g.gameCenter || g.blackbear ? `<div class="videos">${linkOn
       .sort((a, b) => periods.indexOf(a.period) - periods.indexOf(b.period))
       .map((e) => `<tr>${[
         td(esc(e.period), 'num'), td(teamLink(e.team, r)), td(esc(e.number), 'num muted'), td(playerLink(e.player, r)),
-        td(type === 'goal' ? `${e.type === 'SO Goal' ? 'Shootout goal' : e.qty > 1 ? `${e.qty} goals` : ''}${e.video ? VV_MARK : ''}` : `${esc(e.detail || 'Penalty')} · ${e.qty} min`),
+        td(type === 'goal' ? `${e.type === 'SO Goal' ? 'Shootout goal' : e.qty > 1 ? `${e.qty} goals` : ''}` : `${esc(e.detail || 'Penalty')} · ${e.qty} min`),
       ].join('')}</tr>`);
     const goals = evRows('goal');
     const pens = evRows('pen');
@@ -722,7 +721,7 @@ function allTeamFiles(r) {
       const share = t.gf - t.rinkGf ? regGoals / (t.gf - t.rinkGf) : null;
       return `<tr>${[
         td(esc(rp.number), 'num', Number(rp.number) || 999), td(`${playerLink(rp.name, r)}${rp.captain ? ' <i class="badge" title="Captain">C</i>' : ''}`, '', rp.name),
-        td(esc(rp.position), '', rp.position), td(`${goals}${p.videoGoals ? VV_MARK : ''}`, 'num', goals), td(share ? pct(share) : '', 'num', share ?? -1), td(so || '', 'num', so), td(pim, 'num'),
+        td(esc(rp.position), '', rp.position), td(goals, 'num'), td(share ? pct(share) : '', 'num', share ?? -1), td(so || '', 'num', so), td(pim, 'num'),
       ].join('')}</tr>`;
     });
     const h2h = [...t.h2h.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([opp, h]) =>
@@ -792,7 +791,7 @@ function ordinal(n) {
         td(playerLink(p.name, r), '', p.name),
         td(p.teams.length ? p.teams.map((n) => teamLink(n, r)).join('<br>') : '<span class="muted">Sub pool</span>', '', p.team || 'zzz'),
         td(esc(p.number), 'num', Number(p.number) || 999), td(esc(p.position || 'Sub'), '', p.position),
-        td(`${st.goals}${p.videoGoals ? VV_MARK : ''}`, 'num', st.goals),
+        td(st.goals, 'num'),
         ...(view === 'sub' ? [] : [td(p.teamGoalPct ? pct(p.teamGoalPct) : '', 'num', p.teamGoalPct ?? -1)]),
         td(st.soGoals || '', 'num', st.soGoals), td(st.pim, 'num'),
         ...(view === 'team' ? [] : [td(st.subGames || '', 'num', st.subGames)]),
@@ -821,7 +820,7 @@ ${VIEWS.map(([v, l]) => `<section data-view="${v}"><h2 class="view-title">${l}</
         td(`${teamLink(e.team, pr)}${sub && p.teams.length ? ' <i class="badge" title="Played as a sub">sub</i>' : ''}`),
         td(`${g.home === e.team ? 'vs' : '@'} ${teamLink(opp, pr)}`),
         td(res ? `<i class="badge r-${res.toLowerCase()}">${res}</i>` : ''),
-        td(`${e.goals || ''}${e.video ? VV_MARK : ''}`, 'num', e.goals), td(e.soGoals || '', 'num', e.soGoals), td(e.pim ? `${e.pim} <small class="muted">${esc(e.penalties.join(', '))}</small>` : '', 'num', e.pim),
+        td(e.goals || '', 'num', e.goals), td(e.soGoals || '', 'num', e.soGoals), td(e.pim ? `${e.pim} <small class="muted">${esc(e.penalties.join(', '))}</small>` : '', 'num', e.pim),
       ].join('')}</tr>`;
     });
     const asGoalie = D.goalies.filter((s) => s.name === p.name);
@@ -830,7 +829,7 @@ ${VIEWS.map(([v, l]) => `<section data-view="${v}"><h2 class="view-title">${l}</
     const tiles = (view) => {
       const st = p.stats[view];
       const n = p.taggedGames.length;
-      return `<div class="tiles"${both ? ` data-view="${view}"` : ''}>${tile('Goals', `${st.goals}${p.videoGoals ? VV_MARK : ''}`)}${n ? tile('Assists', p.assists, `in ${n} video-tagged game${n === 1 ? '' : 's'}`) : ''}${
+      return `<div class="tiles"${both ? ` data-view="${view}"` : ''}>${tile('Goals', st.goals)}${n ? tile('Assists', p.assists, `in ${n} video-tagged game${n === 1 ? '' : 's'}`) : ''}${
         view !== 'sub' && p.teamGoalPct !== null ? tile('Team goal %', pct(p.teamGoalPct), `${p.teamGoals} of ${teamOf(p.team).gf - teamOf(p.team).rinkGf} ${esc(p.team)} goals`) : ''}${tile('Shootout goals', st.soGoals)}${tile('PIM', st.pim)}${view === 'team' ? '' : tile('Games subbed', st.subGames)}</div>`;
     };
     const body = `<p class="crumbs"><a href="${pr}players.html">Players</a> › ${esc(p.name)}</p>

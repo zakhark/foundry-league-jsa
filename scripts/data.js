@@ -592,7 +592,7 @@ function build(d) {
       players.set(key, {
         name, slug: slugify(name), team: '', teams: [], number: '', position: '', captain: '',
         goals: 0, soGoals: 0, pim: 0, penalties: 0, teamGoals: 0, teamGoalPct: null,
-        assists: 0, taggedGames: [], videoGoals: false, // from tagged video (scripts/analytics.js)
+        assists: 0, taggedGames: [], // from tagged video (scripts/analytics.js)
         stats: { team: blankStats(), sub: blankStats(), total: blankStats() }, // filled in below
         log: new Map(), // game num -> { team, goals, soGoals, pim, penalties: [] }
       });
@@ -613,7 +613,6 @@ function build(d) {
   for (const e of d.events) {
     const p = player(e.player);
     const entry = logFor(p, e.game, e.team);
-    if (e.video) entry.video = true;
     if (e.type === 'Goal') { p.goals += e.qty; entry.goals += e.qty; }
     else if (e.type === 'SO Goal') { p.soGoals += e.qty; entry.soGoals += e.qty; }
     else if (e.type === 'Penalty') {
@@ -645,7 +644,6 @@ function build(d) {
   }
   for (const p of players.values()) {
     p.taggedGames.sort((a, b) => a - b);
-    p.videoGoals = [...p.log.values()].some((e) => e.video);
   }
 
   // Split each player's stats: games for their own roster team(s), games as a
