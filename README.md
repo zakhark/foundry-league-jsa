@@ -109,7 +109,7 @@ The league's video tool (a separate project) lets someone step through a game vi
 - **What the site does with it.**
   - Game pages get a goal map: a full rink with each team's goals at the net it attacks, a heatmap, pass lines and jersey numbers, filters by team and period, and ▶ links that start the video 5 seconds before each goal.
   - Player pages show assists, but only next to how many of their games were tagged; there's no league-wide assists column.
-  - When the video has every goal a team scored in a game, with roster names, its scorers replace the sheet's for that team and game. The goals are marked "✓ video" and every changed count is listed in the data notes. Otherwise the sheet's numbers stay.
+  - When the video has every goal a team scored in a game, with roster names, its scorers replace the sheet's for that team and game. Every changed count is listed in the data notes. Otherwise the sheet's numbers stay.
   - Names are matched to rosters the same way as the sheet's (nicknames, initials such as "JP" for "John").
 
 ## Seasons

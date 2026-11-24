@@ -312,4 +312,3 @@ table.pin-1 tbody tr:hover > :nth-child(1), table.pin-2 tbody tr:hover > :nth-ch
 .gm-list li.on { background: color-mix(in srgb, var(--accent) 14%, transparent); }
 .gm-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
 .gm-seek { white-space: nowrap; font-size: .85rem; margin-left: 4px; }
-.vv { color: var(--win); font-size: .75rem; margin-left: 6px; white-space: nowrap; }
