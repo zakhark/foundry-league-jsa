@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Foundry Adult Hockey League game analytics file, version 1 (analytics-v1)",
+  "description": "Goals tagged from a game video, for the league site. One file per game per submitter, added to the site's repository at seasons/<season>/analytics/<num>-<slug>.json, where <num> is game.num and <slug> is submittedBy.team in lowercase with each run of other characters replaced by '-' (e.g. 77-sk8balls.json), or 'league'. Find game.num, the season and the site's team spellings in the site's games.json (schema games-v1) by ttsGameId first, then blackbearId; never guess a number. The site skips the whole file if the number, the submitting team, the date, the teams or ttsGameId don't match that game, and uses only goals with verified: true. Coordinates are feet on a 200 x 85 ft rink, centre ice at (0, 0), with every shot drawn as attacking the net on the +x side (goal line at x = 89). Versioning: adding an optional field the site can ignore keeps v1; any change that would break an existing file (a renamed, removed or newly required field, or a changed meaning) is a new version with a new schema file, and the site keeps reading v1 files.",
+  "type": "object",
+  "required": ["schema", "game", "submittedBy", "goals"],
+  "properties": {
+    "schema": { "const": "analytics-v1" },
+    "game": {
+      "type": "object",
+      "required": ["num", "date", "away", "home"],
+      "properties": {
+        "num": { "type": "integer", "minimum": 1, "description": "The league's game number in its season (games.json 'num'). Must equal the number in the file name." },
+        "ttsGameId": { "type": ["integer", "null"], "description": "TimeToScore game_id. Checked against the site's own when both are known." },
+        "blackbearId": { "type": ["integer", "null"], "description": "Black Bear TV event id (blackbearsports.tv/watch/<id>). Informational." },
+        "date": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$", "description": "Game date, YYYY-MM-DD, as in games.json." },
+        "away": { "type": "string", "description": "Away team, spelled as in games.json." },
+        "home": { "type": "string", "description": "Home team, spelled as in games.json." },
+        "youtubeUrl": { "type": ["string", "null"], "pattern": "^https://(www\\.|m\\.)?(youtube\\.com|youtu\\.be)/", "description": "The video that videoTime refers to. Goal links only show when it's one of the game's videos on the site." }
+      }
+    },
+    "submittedBy": {
+      "type": "object",
+      "required": ["team"],
+      "properties": {
+        "team": { "type": "string", "description": "The submitting team (one of the game's two teams), or \"league\" for the league's own tagging. Must agree with the file name." }
+      }
+    },
+    "goals": {
+      "type": "array",
+      "description": "Regular-time and overtime goals. Shootout goals come from the league sheet and are not listed.",
+      "items": {
+        "type": "object",
+        "required": ["period", "team", "score", "shot", "verified"],
+        "properties": {
+          "period": { "enum": [1, 2, 3, "OT"] },
+          "team": { "type": "string", "description": "The scoring team, spelled as in games.json." },
+          "score": { "type": "string", "pattern": "^\\d+-\\d+$", "description": "The score after this goal, home first: \"<home>-<away>\". Identifies the goal; no two goals in a file may share it." },
+          "videoTime": { "type": ["integer", "null"], "minimum": 0, "maximum": 21600, "description": "Seconds into youtubeUrl when the goal is scored." },
+          "scorer": { "$ref": "#/$defs/player" },
+          "assist1": { "$ref": "#/$defs/player" },
+          "assist2": { "$ref": "#/$defs/player" },
+          "shot": { "$ref": "#/$defs/point", "description": "Where the shot was released." },
+          "pass": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/point" }], "description": "Where the pass to the scorer came from, or null." },
+          "verified": { "type": "boolean", "description": "true only when a person confirmed this goal. Anything else is ignored by the site." }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "player": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "required": ["name"],
+          "properties": {
+            "name": { "type": "string", "description": "As on the team's roster; an empty name means unknown." },
+            "jersey": { "type": "string" }
+          }
+        }
+      ]
+    },
+    "point": {
+      "type": "object",
+      "required": ["x", "y"],
+      "properties": {
+        "x": { "type": "number", "minimum": -100, "maximum": 100 },
+        "y": { "type": "number", "minimum": -42.5, "maximum": 42.5 }
+      }
+    }
+  },
+  "examples": [
+    {
+      "schema": "analytics-v1",
+      "game": { "num": 77, "ttsGameId": 88328, "blackbearId": 110413, "date": "2026-11-16", "away": "Sk8Balls", "home": "Whalers", "youtubeUrl": "https://www.youtube.com/watch?v=BXMjXpxCO5o" },
+      "submittedBy": { "team": "Sk8Balls" },
+      "goals": [
+        { "period": 1, "team": "Whalers", "score": "1-0", "videoTime": 95, "scorer": { "name": "Ryan Chichester", "jersey": "22" }, "assist1": null, "assist2": null, "shot": { "x": 87, "y": 28 }, "pass": null, "verified": true },
+        { "period": 2, "team": "Sk8Balls", "score": "3-2", "videoTime": 1901, "scorer": { "name": "Jeffrey Truszkowski", "jersey": "11" }, "assist1": { "name": "Brian Kornfield", "jersey": "88" }, "assist2": null, "shot": { "x": 70.5, "y": -6 }, "pass": { "x": 52, "y": 30 }, "verified": true }
+      ]
+    }
+  ]
+}

@@ -180,6 +180,67 @@ function videoPlayer(g) {
 ${vids.filter((v) => v.moments.length).map((v) => `  <ol class="moments" data-for="${v.id}" aria-label="Moments in the ${v.team ? `${esc(v.team)} ` : ''}video"${v.id === first.id ? '' : ' hidden'}>${v.moments.map((m) => `<li><a href="https://www.youtube.com/watch?v=${v.id}&amp;t=${m.t}s" target="_blank" rel="noopener" data-id="${v.id}" data-t="${m.t}"><b>${clock(m.t)}</b> ${esc(m.label)}</a></li>`).join('')}</ol>\n`).join('')}</div>`;
 }
 
+// Where each goal came from, from tagged video (scripts/analytics.js): a full
+// rink with each team's goals at the net it attacks (away on the left, home on
+// the right, as on the scoreboard), pass lines and jersey numbers. app.js adds
+// the heatmap and the filters (team, period, toggles) and seeks the video above.
+// The files store every shot attacking the +x net (feet, centre ice at 0,0), so
+// the away team's shots are turned around to the left end.
+const VV_MARK = '<small class="vv" title="Corrected from the game video">✓ video</small>';
+const GOAL_LEAD_SECONDS = 5;
+function goalMap(g, r) {
+  if (!g.analytics) return '';
+  const ids = new Set(g.videos.map((v) => youTubeId(v.url)).filter(Boolean));
+  const sideOf = (team) => (team === g.home ? 'home' : 'away');
+  // The away end is the home end turned half a turn. Dots on the boards are kept
+  // just inside them so they aren't cut off.
+  const at = (p, side) => {
+    const y = Math.max(-39.5, Math.min(39.5, p.y));
+    return side === 'home' ? { x: p.x, y } : { x: -p.x, y: -y };
+  };
+  const f = (n) => n.toFixed(1);
+  const rink = `<g class="gm-lines">
+<line class="red" x1="-89" y1="-42.5" x2="-89" y2="42.5"/><line class="red" x1="89" y1="-42.5" x2="89" y2="42.5"/>
+<line class="blue" x1="-25" y1="-42.5" x2="-25" y2="42.5"/><line class="blue" x1="25" y1="-42.5" x2="25" y2="42.5"/>
+<line class="red centre" x1="0" y1="-42.5" x2="0" y2="42.5"/>
+<circle class="blue-c" cx="0" cy="0" r="15"/><circle class="blue-d" cx="0" cy="0" r="0.8"/>
+${[-69, 69].flatMap((x) => [-22, 22].map((y) => `<circle class="circle" cx="${x}" cy="${y}" r="15"/><circle class="dot" cx="${x}" cy="${y}" r="1"/>`)).join('')}
+${[-20, 20].flatMap((x) => [-22, 22].map((y) => `<circle class="dot" cx="${x}" cy="${y}" r="0.8"/>`)).join('')}
+<path class="crease" d="M89 -4 A6 6 0 0 0 89 4 Z"/><rect class="net" x="89" y="-3" width="3.4" height="6"/>
+<path class="crease" d="M-89 -4 A6 6 0 0 1 -89 4 Z"/><rect class="net" x="-92.4" y="-3" width="3.4" height="6"/>
+</g><rect class="boards" x="-100" y="-42.5" width="200" height="85" rx="28"/>
+<text class="gm-end" x="-56" y="-36" text-anchor="middle">← ${esc(g.away)} attack</text><text class="gm-end" x="56" y="-36" text-anchor="middle">${esc(g.home)} attack →</text>`;
+  const goals = g.analytics.goals;
+  const name = (p) => (p ? (p.player ? playerLink(p.player, r) : esc(p.name)) : '<span class="muted">Unknown</span>');
+  const marks = goals.map((x, i) => {
+    const side = sideOf(x.team), s = at(x.shot, side), p = x.pass && at(x.pass, side);
+    const color = teamColor(x.team);
+    return `<g class="gm-goal" data-i="${i}" data-period="${esc(x.period)}" data-team="${side}" data-x="${f(s.x)}" data-y="${f(s.y)}" tabindex="0" role="button" aria-label="Goal ${i + 1}">${p ? `<g class="gm-pass"><line x1="${f(p.x)}" y1="${f(p.y)}" x2="${f(s.x)}" y2="${f(s.y)}" stroke="${color}"/><circle cx="${f(p.x)}" cy="${f(p.y)}" r="1.1" fill="${color}"/></g>` : ''}<circle class="gm-pin" cx="${f(s.x)}" cy="${f(s.y)}" r="2.7" fill="${color}"/><text class="gm-jn" x="${f(s.x)}" y="${f(s.y + 0.9)}" text-anchor="middle">${esc((x.scorer && x.scorer.jersey) || '?')}</text><title>${esc(x.team)}: ${esc((x.scorer && x.scorer.name) || 'Unknown')}</title></g>`;
+  }).join('');
+  const rows = goals.map((x, i) => {
+    const id = youTubeId(x.youtubeUrl || '');
+    const t = Math.max(0, (x.videoTime ?? 0) - GOAL_LEAD_SECONDS); // start a little before the goal so the play is seen
+    const seek = x.videoTime !== null && ids.has(id)
+      ? `<a class="gm-seek" href="https://www.youtube.com/watch?v=${id}&amp;t=${t}s" target="_blank" rel="noopener" data-seek data-id="${id}" data-t="${t}" aria-label="Watch this goal">▶ ${clock(x.videoTime)}</a>` : '';
+    const mine = x.team === g.home ? x.home : x.away, theirs = x.team === g.home ? x.away : x.home;
+    return `<li data-i="${i}" data-period="${esc(x.period)}" data-team="${sideOf(x.team)}"><span class="gm-dot" style="background:${teamColor(x.team)}"></span><span class="muted">${x.period === 'OT' ? 'OT' : `P${esc(x.period)}`}</span> <b>${esc(x.team)} ${mine}–${theirs}</b> ${x.scorer && x.scorer.jersey ? `<span class="muted">#${esc(x.scorer.jersey)}</span> ` : ''}${name(x.scorer)}${x.assists.length ? ` <span class="muted">(${x.assists.map(name).join(', ')})</span>` : ''} ${seek}</li>`;
+  }).join('');
+  const periods = ['1', '2', '3', 'OT'].filter((p) => goals.some((x) => x.period === p));
+  const seg = (attr, items, label) => `<div class="gm-seg" role="group" aria-label="${label}">${items.map(([v, text], i) => `<button type="button" ${attr}="${v}" aria-pressed="${i === 0}">${text}</button>`).join('')}</div>`;
+  return `<section class="goalmap" data-goalmap>
+<h2>Goal map</h2>
+<div class="gm-controls" hidden>
+${seg('data-team-filter', [['all', 'Both teams'], ['away', esc(g.away)], ['home', esc(g.home)]], 'Team')}
+${seg('data-period', [['all', 'All periods'], ...periods.map((p) => [p, p === 'OT' ? 'OT' : `P${p}`])], 'Period')}
+<span class="gm-toggles">${[['heat', 'Heatmap'], ['pass', 'Pass lines'], ['jn', 'Jersey #s']].map(([t, l]) => `<label><input type="checkbox" data-toggle="${t}" checked> ${l}</label>`).join('')}</span>
+</div>
+<div class="gm-ice"><canvas class="gm-heat" width="400" height="170" aria-hidden="true"></canvas>
+<svg class="gm-rink" viewBox="-100 -42.5 200 85" role="img" aria-label="Rink with a dot where each goal was shot from">${rink}${marks}</svg></div>
+<ol class="gm-list">${rows}</ol>
+<p class="muted small">From the game video, tagged by a person. Dashed lines show where the pass came from.</p>
+</section>`;
+}
+
 // Scores from the rink's game center (scripts/rink-scores.js) for games the
 // sheet has no score for yet: a final one is used as the result and marked
 // "rink"; a live one is shown but not counted. A live game long past its end
@@ -383,6 +444,8 @@ const SCHEDULE_COLS = [
 fs.rmSync(OUT, { recursive: true, force: true });
 fs.mkdirSync(OUT, { recursive: true });
 for (const f of ['style.css', 'app.js', 'logo.png']) fs.copyFileSync(path.join('src', f), path.join(OUT, f));
+// File formats other tools follow (versioned; see each schema's description).
+fs.cpSync(path.join('src', 'formats'), path.join(OUT, 'formats'), { recursive: true });
 fs.mkdirSync(path.join(OUT, 'logos'), { recursive: true });
 for (const t of D.teams.values()) {
   if (logoOf(t.name)) continue;
@@ -530,13 +593,14 @@ ${linkOnly.length || g.gameCenter || g.blackbear ? `<div class="videos">${linkOn
       .sort((a, b) => periods.indexOf(a.period) - periods.indexOf(b.period))
       .map((e) => `<tr>${[
         td(esc(e.period), 'num'), td(teamLink(e.team, r)), td(esc(e.number), 'num muted'), td(playerLink(e.player, r)),
-        td(type === 'goal' ? (e.type === 'SO Goal' ? 'Shootout goal' : e.qty > 1 ? `${e.qty} goals` : '') : `${esc(e.detail || 'Penalty')} · ${e.qty} min`),
+        td(type === 'goal' ? `${e.type === 'SO Goal' ? 'Shootout goal' : e.qty > 1 ? `${e.qty} goals` : ''}${e.video ? VV_MARK : ''}` : `${esc(e.detail || 'Penalty')} · ${e.qty} min`),
       ].join('')}</tr>`);
     const goals = evRows('goal');
     const pens = evRows('pen');
     const evCols = [{ label: 'Per', cls: 'num' }, { label: 'Team' }, { label: '#', cls: 'num' }, { label: 'Player' }, { label: '' }];
     body += `
 <h2>Scoring by period</h2>${periodTable()}
+${goalMap(g, r)}
 <div class="grid-2">
 <section><h2>Goals</h2>${goals.length ? table(evCols, goals) : `<p class="muted">${g.fromRink ? 'Scorers will show up once the league sheet is updated.' : 'No goal details recorded.'}</p>`}</section>
 <section><h2>Penalties</h2>${pens.length ? table(evCols, pens) : `<p class="muted">${g.fromRink ? 'Penalties will show up once the league sheet is updated.' : 'No penalties.'}</p>`}</section>
@@ -563,6 +627,19 @@ ${table([{ label: 'Team' }, { label: 'Rank', cls: 'num' }, { label: 'Record' }, 
   }
   page({ file: `games/${g.num}.html`, title, body });
 }
+
+// ---------- games.json ----------
+// Our game numbers with the rink's and Black Bear TV's ids, so the video tool
+// can name analytics files by our game number. Only what game pages already show.
+fs.writeFileSync(path.join(OUT, 'games.json'), `${JSON.stringify({
+  schema: require('../src/formats/games-v1.schema.json').properties.schema.const,
+  season: Number(D.season),
+  games: D.games.filter((g) => !g.tbd).map((g) => ({
+    num: g.num, date: g.date ? g.date.toISOString().slice(0, 10) : null, away: g.away, home: g.home,
+    ttsGameId: g.ttsId || null, blackbearId: g.blackbearId || null,
+  })),
+}, null, 1)}
+`);
 
 // ---------- Calendars and BenchApp files ----------
 // calendar/<team>.ics are subscribable team calendars; benchapp/<team>.csv is
@@ -645,7 +722,7 @@ function allTeamFiles(r) {
       const share = t.gf - t.rinkGf ? regGoals / (t.gf - t.rinkGf) : null;
       return `<tr>${[
         td(esc(rp.number), 'num', Number(rp.number) || 999), td(`${playerLink(rp.name, r)}${rp.captain ? ' <i class="badge" title="Captain">C</i>' : ''}`, '', rp.name),
-        td(esc(rp.position), '', rp.position), td(goals, 'num'), td(share ? pct(share) : '', 'num', share ?? -1), td(so || '', 'num', so), td(pim, 'num'),
+        td(esc(rp.position), '', rp.position), td(`${goals}${p.videoGoals ? VV_MARK : ''}`, 'num', goals), td(share ? pct(share) : '', 'num', share ?? -1), td(so || '', 'num', so), td(pim, 'num'),
       ].join('')}</tr>`;
     });
     const h2h = [...t.h2h.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([opp, h]) =>
@@ -715,7 +792,7 @@ function ordinal(n) {
         td(playerLink(p.name, r), '', p.name),
         td(p.teams.length ? p.teams.map((n) => teamLink(n, r)).join('<br>') : '<span class="muted">Sub pool</span>', '', p.team || 'zzz'),
         td(esc(p.number), 'num', Number(p.number) || 999), td(esc(p.position || 'Sub'), '', p.position),
-        td(st.goals, 'num'),
+        td(`${st.goals}${p.videoGoals ? VV_MARK : ''}`, 'num', st.goals),
         ...(view === 'sub' ? [] : [td(p.teamGoalPct ? pct(p.teamGoalPct) : '', 'num', p.teamGoalPct ?? -1)]),
         td(st.soGoals || '', 'num', st.soGoals), td(st.pim, 'num'),
         ...(view === 'team' ? [] : [td(st.subGames || '', 'num', st.subGames)]),
@@ -728,7 +805,7 @@ function ordinal(n) {
   <label>Stats <select data-filter="view">${VIEWS.map(([v, l]) => `<option value="${v}">${l}</option>`).join('')}</select></label>
 </div>
 ${VIEWS.map(([v, l]) => `<section data-view="${v}"><h2 class="view-title">${l}</h2>${viewTable(v)}</section>`).join('')}
-<p class="muted small">Tap or click a column heading to sort. The league records goals only (no assists).</p>`;
+<p class="muted small">Tap or click a column heading to sort. The league records goals only (no assists). Assists from video-tagged games are on player pages.</p>`;
   page({ file: 'players.html', title: 'Players', body });
 
   for (const p of list) {
@@ -744,7 +821,7 @@ ${VIEWS.map(([v, l]) => `<section data-view="${v}"><h2 class="view-title">${l}</
         td(`${teamLink(e.team, pr)}${sub && p.teams.length ? ' <i class="badge" title="Played as a sub">sub</i>' : ''}`),
         td(`${g.home === e.team ? 'vs' : '@'} ${teamLink(opp, pr)}`),
         td(res ? `<i class="badge r-${res.toLowerCase()}">${res}</i>` : ''),
-        td(e.goals || '', 'num', e.goals), td(e.soGoals || '', 'num', e.soGoals), td(e.pim ? `${e.pim} <small class="muted">${esc(e.penalties.join(', '))}</small>` : '', 'num', e.pim),
+        td(`${e.goals || ''}${e.video ? VV_MARK : ''}`, 'num', e.goals), td(e.soGoals || '', 'num', e.soGoals), td(e.pim ? `${e.pim} <small class="muted">${esc(e.penalties.join(', '))}</small>` : '', 'num', e.pim),
       ].join('')}</tr>`;
     });
     const asGoalie = D.goalies.filter((s) => s.name === p.name);
@@ -752,7 +829,8 @@ ${VIEWS.map(([v, l]) => `<section data-view="${v}"><h2 class="view-title">${l}</
     const both = p.teams.length && p.stats.sub.subGames;
     const tiles = (view) => {
       const st = p.stats[view];
-      return `<div class="tiles"${both ? ` data-view="${view}"` : ''}>${tile('Goals', st.goals)}${
+      const n = p.taggedGames.length;
+      return `<div class="tiles"${both ? ` data-view="${view}"` : ''}>${tile('Goals', `${st.goals}${p.videoGoals ? VV_MARK : ''}`)}${n ? tile('Assists', p.assists, `in ${n} video-tagged game${n === 1 ? '' : 's'}`) : ''}${
         view !== 'sub' && p.teamGoalPct !== null ? tile('Team goal %', pct(p.teamGoalPct), `${p.teamGoals} of ${teamOf(p.team).gf - teamOf(p.team).rinkGf} ${esc(p.team)} goals`) : ''}${tile('Shootout goals', st.soGoals)}${tile('PIM', st.pim)}${view === 'team' ? '' : tile('Games subbed', st.subGames)}</div>`;
     };
     const body = `<p class="crumbs"><a href="${pr}players.html">Players</a> › ${esc(p.name)}</p>
@@ -762,6 +840,7 @@ ${VIEWS.map(([v, l]) => `<section data-view="${v}"><h2 class="view-title">${l}</
 </div>
 ${both ? `<div class="toolbar"><label>Stats <select data-filter="view"><option value="team">For ${esc(p.teams.join(' / '))}</option><option value="sub">As a sub</option><option value="total">Total</option></select></label></div>
 ${tiles('team')}${tiles('sub')}${tiles('total')}` : tiles('total')}
+${p.taggedGames.length ? `<p class="muted small">Video-tagged games: ${p.taggedGames.map((num) => gameLink({ num }, pr, `#${num}`)).join(', ')}. Assists come only from games tagged from video, so they aren't a full-season count.</p>` : ''}
 ${asGoalie.length ? `<h2>Goaltending</h2>${table([{ label: 'Team' }, { label: 'Role' }, { label: 'GP', cls: 'num' }, { label: 'Record' }, { label: 'GA', cls: 'num' }, { label: 'GAA', cls: 'num' }, { label: 'SHO', cls: 'num' }],
   asGoalie.map((s) => `<tr>${[td(teamLink(s.team, pr)), td(s.main ? 'Regular' : 'Sub'), td(s.gp, 'num'), td(rec(s)), td(s.ga, 'num'), td(fmt2(s.gaa), 'num'), td(s.sho, 'num')].join('')}</tr>`))}` : ''}
 <h2>Game log</h2>

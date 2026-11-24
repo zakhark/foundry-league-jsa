@@ -73,5 +73,5 @@ module.exports = {
     teamNames: { Ducks: 'UnDucks' },
   },
   // The public site address, used for links inside calendar events.
-  siteUrl: process.env.SITE_URL || 'https://zakhark.github.io/foundry-league-jsa/',
+  siteUrl: process.env.SITE_URL || 'https://foundry-league-jsa.pages.dev/',
 };
