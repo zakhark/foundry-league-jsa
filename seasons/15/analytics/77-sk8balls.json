@@ -1,0 +1,254 @@
+{
+ "schema": "analytics-v1",
+ "game": {
+  "num": 77,
+  "ttsGameId": 88328,
+  "blackbearId": 110413,
+  "date": "2026-11-16",
+  "away": "Sk8Balls",
+  "home": "Whalers",
+  "youtubeUrl": "https://www.youtube.com/watch?v=BXMjXpxCO5o"
+ },
+ "submittedBy": {
+  "team": "Sk8Balls"
+ },
+ "goals": [
+  {
+   "period": 1,
+   "team": "Whalers",
+   "score": "1-0",
+   "videoTime": 95,
+   "scorer": {
+    "name": "Ryan Chichester",
+    "jersey": "22"
+   },
+   "assist1": null,
+   "assist2": null,
+   "shot": {
+    "x": 87,
+    "y": 28
+   },
+   "pass": null,
+   "verified": true
+  },
+  {
+   "period": 1,
+   "team": "Sk8Balls",
+   "score": "1-1",
+   "videoTime": 507,
+   "scorer": {
+    "name": "Joe Shammah",
+    "jersey": "48"
+   },
+   "assist1": null,
+   "assist2": null,
+   "shot": {
+    "x": 85,
+    "y": 5
+   },
+   "pass": null,
+   "verified": true
+  },
+  {
+   "period": 1,
+   "team": "Whalers",
+   "score": "2-1",
+   "videoTime": 698,
+   "scorer": {
+    "name": "Drew Zaun",
+    "jersey": "48"
+   },
+   "assist1": {
+    "name": "Ryan Chichester",
+    "jersey": "22"
+   },
+   "assist2": null,
+   "shot": {
+    "x": 73.5,
+    "y": 0.2
+   },
+   "pass": null,
+   "verified": true
+  },
+  {
+   "period": 1,
+   "team": "Whalers",
+   "score": "3-1",
+   "videoTime": 754,
+   "scorer": {
+    "name": "Matthew Conde",
+    "jersey": "77"
+   },
+   "assist1": null,
+   "assist2": null,
+   "shot": {
+    "x": 82.5,
+    "y": -0.4
+   },
+   "pass": null,
+   "verified": true
+  },
+  {
+   "period": 2,
+   "team": "Sk8Balls",
+   "score": "3-2",
+   "videoTime": 1901,
+   "scorer": {
+    "name": "Jefffrey Truszkowski",
+    "jersey": "11"
+   },
+   "assist1": {
+    "name": "Brian Kornfield",
+    "jersey": "88"
+   },
+   "assist2": null,
+   "shot": {
+    "x": 76,
+    "y": -8
+   },
+   "pass": {
+    "x": 85.1,
+    "y": -23.7
+   },
+   "verified": true
+  },
+  {
+   "period": 2,
+   "team": "Sk8Balls",
+   "score": "3-3",
+   "videoTime": 2130,
+   "scorer": {
+    "name": "John Stabner",
+    "jersey": "13"
+   },
+   "assist1": null,
+   "assist2": null,
+   "shot": {
+    "x": 30,
+    "y": -41
+   },
+   "pass": null,
+   "verified": true
+  },
+  {
+   "period": 3,
+   "team": "Sk8Balls",
+   "score": "3-4",
+   "videoTime": 2446,
+   "scorer": {
+    "name": "Brian Kornfield",
+    "jersey": "88"
+   },
+   "assist1": null,
+   "assist2": null,
+   "shot": {
+    "x": 86,
+    "y": 4
+   },
+   "pass": null,
+   "verified": true
+  },
+  {
+   "period": 3,
+   "team": "Sk8Balls",
+   "score": "3-5",
+   "videoTime": 2571,
+   "scorer": {
+    "name": "Corrigan Lewis",
+    "jersey": "9"
+   },
+   "assist1": {
+    "name": "Jefffrey Truszkowski",
+    "jersey": "11"
+   },
+   "assist2": null,
+   "shot": {
+    "x": 67.1,
+    "y": 13.5
+   },
+   "pass": {
+    "x": 66.6,
+    "y": -21.6
+   },
+   "verified": true
+  },
+  {
+   "period": 3,
+   "team": "Sk8Balls",
+   "score": "3-6",
+   "videoTime": 2752,
+   "scorer": {
+    "name": "Brian Kornfield",
+    "jersey": "88"
+   },
+   "assist1": null,
+   "assist2": null,
+   "shot": {
+    "x": 84.2,
+    "y": 0.4
+   },
+   "pass": null,
+   "verified": true
+  },
+  {
+   "period": 3,
+   "team": "Sk8Balls",
+   "score": "3-7",
+   "videoTime": 3006,
+   "scorer": {
+    "name": "Brian Kornfield",
+    "jersey": "88"
+   },
+   "assist1": {
+    "name": "Chris Pfuhl",
+    "jersey": "76"
+   },
+   "assist2": null,
+   "shot": {
+    "x": 82.5,
+    "y": 7.7
+   },
+   "pass": {
+    "x": 62.5,
+    "y": 38.4
+   },
+   "verified": true
+  },
+  {
+   "period": 3,
+   "team": "Whalers",
+   "score": "4-7",
+   "videoTime": 3056,
+   "scorer": {
+    "name": "Matthew Conde",
+    "jersey": "77"
+   },
+   "assist1": null,
+   "assist2": null,
+   "shot": {
+    "x": 83,
+    "y": 4
+   },
+   "pass": null,
+   "verified": true
+  },
+  {
+   "period": 3,
+   "team": "Whalers",
+   "score": "5-7",
+   "videoTime": 3506,
+   "scorer": {
+    "name": null,
+    "jersey": "29"
+   },
+   "assist1": null,
+   "assist2": null,
+   "shot": {
+    "x": 69,
+    "y": 22
+   },
+   "pass": null,
+   "verified": true
+  }
+ ]
+}
